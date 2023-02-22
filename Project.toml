@@ -3,6 +3,10 @@ uuid = "cec542a4-22c5-46cb-8ca4-a46a7737b387"
 authors = ["Mattia <iskyd@proton.me>"]
 version = "0.1.0"
 
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
+
 [compat]
 julia = "1.8"
 

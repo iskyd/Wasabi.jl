@@ -1,6 +1,10 @@
-using Wasabi
-using Test
+cd(@__DIR__)
 
-@testset "Wasabi.jl" begin
-    # Write your tests here.
+using Pkg
+
+using Test, TestSetExtensions, SafeTestsets
+using Wasabi
+
+@testset ExtendedTestSet "Wasabi tests" begin
+  @includetests ARGS
 end
