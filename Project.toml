@@ -9,6 +9,8 @@ SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 
 [compat]
 julia = "1.8"
+DataFrames = "1.5"
+SQLite = "1.6"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
