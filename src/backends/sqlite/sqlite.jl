@@ -77,3 +77,15 @@ end
 function Wasabi.execute_query(db::SQLite.DB, query::String, params::Vector{Any}=Any[])
     return SQLite.DBInterface.execute(db, query, params) |> DataFrame
 end
+
+function Wasabi.begin_transaction(db::SQLite.DB)
+    SQLite.execute(db, "BEGIN TRANSACTION")
+end
+
+function Wasabi.commit(db::SQLite.DB)
+    SQLite.execute(db, "COMMIT TRANSACTION")
+end
+
+function Wasabi.rollback(db::SQLite.DB)
+    SQLite.execute(db, "ROLLBACK TRANSACTION")
+end

@@ -82,4 +82,22 @@
     @test users[1].name == "John Doe"
     @test users[2].id == 2
     @test users[2].name == "Jane Doe"
+
+    Wasabi.begin_transaction(conn)
+    query = "INSERT INTO user (id, name) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any[3, "John Doe"])
+    Wasabi.rollback(conn)
+
+    query = "SELECT * FROM user"
+    result = Wasabi.execute_query(conn, query)
+    @test length(result[!, :id]) == 2
+
+    Wasabi.begin_transaction(conn)
+    query = "INSERT INTO user (id, name) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any[3, "John Doe"])
+    Wasabi.commit(conn)
+
+    query = "SELECT * FROM user"
+    result = Wasabi.execute_query(conn, query)
+    @test length(result[!, :id]) == 3
 end

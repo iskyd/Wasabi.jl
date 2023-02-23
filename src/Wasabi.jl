@@ -70,6 +70,24 @@ function df2model(m::Type{T}, df::DataFrame) where {T<:Wasabi.Model}
     return [m(map(col -> row[col], Wasabi.colnames(m))...) for row in eachrow(df)]
 end
 
+"""
+    begin_transaction(db::Any)
+    Begins a transaction.
+"""
+function begin_transaction end
+
+"""
+    commit(db::Any)
+    Commits the current transaction.
+"""
+function commit end
+
+"""
+    rollback(db::Any)
+    Rolls back the current transaction.
+"""
+function rollback end
+
 include("constraints.jl")
 include("backends/sqlite/sqlite.jl")
 
