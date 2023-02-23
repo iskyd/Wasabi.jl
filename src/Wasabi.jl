@@ -1,5 +1,7 @@
 module Wasabi
 
+using DataFrames
+
 abstract type Model end
 abstract type ModelConstraint end
 abstract type ConnectionConfiguration end
@@ -49,10 +51,24 @@ function create_schema end
 function delete_schema end
 
 """
+    execute_query(db::Any, query::String, params::Vector{Any})
+    Executes the given query with the given parameters.
+"""
+function execute_query end
+
+"""
     first(db::Any, m::Type{T})
     Returns the first row of the given model with the given id.
 """
 function first end
+
+"""
+    df2model(m::Type{T}, df::DataFrame) where {T <: Model}
+    Converts the given DataFrame to the given model.
+"""
+function df2model(m::Type{T}, df::DataFrame) where {T<:Wasabi.Model}
+    return [m(map(col -> row[col], Wasabi.colnames(m))...) for row in eachrow(df)]
+end
 
 include("constraints.jl")
 include("backends/sqlite/sqlite.jl")

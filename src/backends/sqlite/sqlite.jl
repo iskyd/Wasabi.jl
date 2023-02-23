@@ -1,4 +1,5 @@
 using SQLite
+using DataFrames
 import Wasabi
 
 export SQLiteConnectionConfiguration
@@ -67,4 +68,12 @@ end
 
 function constraint_to_sql(constraint::Wasabi.NotNullConstraint)::String
     return "NOT NULL ($(join(constraint.fields, ", ")))"
+end
+
+"""
+    execute_query(db::SQLite.DB, query::String, params::Vector{Any})
+    Executes the given query with the given parameters.
+"""
+function Wasabi.execute_query(db::SQLite.DB, query::String, params::Vector{Any}=Any[])
+    return SQLite.DBInterface.execute(db, query, params) |> DataFrame
 end

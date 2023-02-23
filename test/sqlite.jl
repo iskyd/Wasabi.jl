@@ -51,4 +51,35 @@
     ]
     q = Wasabi.create_schema(conn, UserProfile, constraints)
     @test q == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER, user_id INTEGER NOT NULL, bio TEXT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES user (id), UNIQUE (user_id))"
+
+    query = "INSERT INTO user (id, name) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any[1, "John Doe"])
+
+    query = "SELECT * FROM user"
+    result = Wasabi.execute_query(conn, query)
+    @test length(result[!, :id]) == 1
+    @test result[!, :id][1] == 1
+    @test result[!, :name][1] == "John Doe"
+
+    user = Wasabi.df2model(User, result)[1]
+    @test user.id == 1
+    @test user.name == "John Doe"
+
+    query = "INSERT INTO user (id, name) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any[2, "Jane Doe"])
+
+    query = "SELECT * FROM user"
+    result = Wasabi.execute_query(conn, query)
+    @test length(result[!, :id]) == 2
+    @test result[!, :id][1] == 1
+    @test result[!, :name][1] == "John Doe"
+    @test result[!, :id][2] == 2
+    @test result[!, :name][2] == "Jane Doe"
+
+    users = Wasabi.df2model(User, result)
+    @test length(users) == 2
+    @test users[1].id == 1
+    @test users[1].name == "John Doe"
+    @test users[2].id == 2
+    @test users[2].name == "Jane Doe"
 end
