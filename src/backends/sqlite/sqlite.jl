@@ -71,10 +71,10 @@ function constraint_to_sql(constraint::Wasabi.NotNullConstraint)::String
 end
 
 """
-    execute_query(db::SQLite.DB, query::String, params::Vector{Any})
+    execute_raw_query(db::SQLite.DB, query::String, params::Vector{Any})
     Executes the given query with the given parameters.
 """
-function Wasabi.execute_query(db::SQLite.DB, query::String, params::Vector{Any}=Any[])
+function Wasabi.execute_raw_query(db::SQLite.DB, query::String, params::Vector{Any}=Any[])
     return SQLite.DBInterface.execute(db, query, params) |> DataFrame
 end
 
@@ -88,4 +88,23 @@ end
 
 function Wasabi.rollback(db::SQLite.DB)
     SQLite.execute(db, "ROLLBACK TRANSACTION")
+end
+
+function Wasabi.first(db::SQLite.DB, m::Type{T}, id) where {T<:Wasabi.Model}
+    query = "SELECT * FROM $(Wasabi.tablename(m)) WHERE id = ? LIMIT 1"
+    df = Wasabi.execute_raw_query(db, query, Any[id])
+    if size(df, 1) == 0
+        return nothing
+    end
+
+    return Wasabi.df2model(m, df)[1]
+end
+
+function Wasabi.insert(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
+    columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
+    fields = map(column -> column[1], columns)
+    values = map(column -> column[2], columns)
+
+    query = "INSERT INTO $(Wasabi.tablename(typeof(model))) ($(join(fields, ", "))) VALUES ($(join(fill("?", length(fields)), ", ")))"
+    SQLite.DBInterface.execute(db, query, values)
 end

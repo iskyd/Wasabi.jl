@@ -53,10 +53,10 @@
     @test q == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER, user_id INTEGER NOT NULL, bio TEXT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES user (id), UNIQUE (user_id))"
 
     query = "INSERT INTO user (id, name) VALUES (?, ?)"
-    Wasabi.execute_query(conn, query, Any[1, "John Doe"])
+    Wasabi.execute_raw_query(conn, query, Any[1, "John Doe"])
 
     query = "SELECT * FROM user"
-    result = Wasabi.execute_query(conn, query)
+    result = Wasabi.execute_raw_query(conn, query)
     @test length(result[!, :id]) == 1
     @test result[!, :id][1] == 1
     @test result[!, :name][1] == "John Doe"
@@ -66,10 +66,10 @@
     @test user.name == "John Doe"
 
     query = "INSERT INTO user (id, name) VALUES (?, ?)"
-    Wasabi.execute_query(conn, query, Any[2, "Jane Doe"])
+    Wasabi.execute_raw_query(conn, query, Any[2, "Jane Doe"])
 
     query = "SELECT * FROM user"
-    result = Wasabi.execute_query(conn, query)
+    result = Wasabi.execute_raw_query(conn, query)
     @test length(result[!, :id]) == 2
     @test result[!, :id][1] == 1
     @test result[!, :name][1] == "John Doe"
@@ -85,19 +85,33 @@
 
     Wasabi.begin_transaction(conn)
     query = "INSERT INTO user (id, name) VALUES (?, ?)"
-    Wasabi.execute_query(conn, query, Any[3, "John Doe"])
+    Wasabi.execute_raw_query(conn, query, Any[3, "John Doe"])
     Wasabi.rollback(conn)
 
     query = "SELECT * FROM user"
-    result = Wasabi.execute_query(conn, query)
+    result = Wasabi.execute_raw_query(conn, query)
     @test length(result[!, :id]) == 2
 
     Wasabi.begin_transaction(conn)
     query = "INSERT INTO user (id, name) VALUES (?, ?)"
-    Wasabi.execute_query(conn, query, Any[3, "John Doe"])
+    Wasabi.execute_raw_query(conn, query, Any[3, "John Doe"])
     Wasabi.commit(conn)
 
     query = "SELECT * FROM user"
-    result = Wasabi.execute_query(conn, query)
+    result = Wasabi.execute_raw_query(conn, query)
     @test length(result[!, :id]) == 3
+
+    user = Wasabi.first(conn, User, 1)
+    @test user.id == 1
+    @test user.name == "John Doe"
+
+    user = Wasabi.first(conn, User, 10)
+    @test user === nothing
+
+    new_user = User(10, "John Doe")
+    Wasabi.insert(conn, new_user)
+
+    user = Wasabi.first(conn, User, 10)
+    @test user.id == 10
+    @test user.name == "John Doe"
 end

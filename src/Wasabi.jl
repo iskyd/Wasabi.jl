@@ -51,10 +51,10 @@ function create_schema end
 function delete_schema end
 
 """
-    execute_query(db::Any, query::String, params::Vector{Any})
+    execute_raw_query(db::Any, query::String, params::Vector{Any})
     Executes the given query with the given parameters.
 """
-function execute_query end
+function execute_raw_query end
 
 """
     first(db::Any, m::Type{T})
@@ -68,6 +68,14 @@ function first end
 """
 function df2model(m::Type{T}, df::DataFrame) where {T<:Wasabi.Model}
     return [m(map(col -> row[col], Wasabi.colnames(m))...) for row in eachrow(df)]
+end
+
+"""
+    model2tuple(m::T) where {T <: Model}
+    Converts the given model to a tuple.
+"""
+function model2tuple(m::T) where {T <: Model}
+    return tuple(map(col -> (col, getfield(m, col)), Wasabi.colnames(T))...)
 end
 
 """
@@ -87,6 +95,12 @@ function commit end
     Rolls back the current transaction.
 """
 function rollback end
+
+"""
+    insert(db::Any, model::T) where {T <: Model}
+    Inserts the given model into the database.
+"""
+function insert end
 
 include("constraints.jl")
 include("backends/sqlite/sqlite.jl")
