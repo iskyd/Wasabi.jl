@@ -9,7 +9,7 @@
     struct UserProfile <: Wasabi.Model
         id::Int
         user_id::Int
-        bio::String
+        bio::Union{String,Nothing}
     end
 
     constraints = [
@@ -23,17 +23,17 @@
     Wasabi.delete_schema(conn, UserProfile)
 
     q = Wasabi.create_schema(conn, User)
-    @test q == "CREATE TABLE IF NOT EXISTS user (id INTEGER, name TEXT)"
+    @test q == "CREATE TABLE IF NOT EXISTS user (id INTEGER NOT NULL, name TEXT NOT NULL)"
 
     q = Wasabi.create_schema(conn, User, constraints)
-    @test q == "CREATE TABLE IF NOT EXISTS user (id INTEGER, name TEXT, PRIMARY KEY (id))"
+    @test q == "CREATE TABLE IF NOT EXISTS user (id INTEGER NOT NULL, name TEXT NOT NULL, PRIMARY KEY (id))"
 
     constraints = [
         Wasabi.PrimaryKeyConstraint([:id]),
         Wasabi.ForeignKeyConstraint([:id], :user, [:id])
     ]
     q = Wasabi.create_schema(conn, UserProfile, constraints)
-    @test q == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER, user_id INTEGER, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (id) REFERENCES user (id))"
+    @test q == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (id) REFERENCES user (id))"
 
     constraints = [
         Wasabi.PrimaryKeyConstraint([:id]),
@@ -41,16 +41,7 @@
         Wasabi.UniqueConstraint([:user_id])
     ]
     q = Wasabi.create_schema(conn, UserProfile, constraints)
-    @test q == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER, user_id INTEGER, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES user (id), UNIQUE (user_id))"
-
-    constraints = [
-        Wasabi.PrimaryKeyConstraint([:id]),
-        Wasabi.ForeignKeyConstraint([:user_id], :user, [:id]),
-        Wasabi.UniqueConstraint([:user_id]),
-        Wasabi.NotNullConstraint([:bio, :user_id])
-    ]
-    q = Wasabi.create_schema(conn, UserProfile, constraints)
-    @test q == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER, user_id INTEGER NOT NULL, bio TEXT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES user (id), UNIQUE (user_id))"
+    @test q == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES user (id), UNIQUE (user_id))"
 
     query = "INSERT INTO user (id, name) VALUES (?, ?)"
     Wasabi.execute_raw_query(conn, query, Any[1, "John Doe"])

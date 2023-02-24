@@ -38,13 +38,11 @@ end
     Returns the query used to create the schema.
 """
 function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=Wasabi.ModelConstraint[]) where {T<:Wasabi.Model,S<:Wasabi.ModelConstraint}
-    columns = [(col, MAPPING_TYPES[Wasabi.coltype(m, col)], any(constraint -> constraint isa Wasabi.NotNullConstraint && col in constraint.fields, constraints)) for col in Wasabi.colnames(m)]
-    query = "CREATE TABLE IF NOT EXISTS $(Wasabi.tablename(m)) ($(join([String(col[1]) * " " * col[2] * (col[3] == 1 ? " NOT NULL" : "") for col in columns], ", "))"
+    columns = [(col, get_column_type(col, m)) for col in Wasabi.colnames(m)]
+    query = "CREATE TABLE IF NOT EXISTS $(Wasabi.tablename(m)) ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1]) ? "" : " NOT NULL") for col in columns], ", "))"
 
     for constraint in constraints
-        if !(constraint isa Wasabi.NotNullConstraint)
-            query = query * ", " * constraint_to_sql(constraint)
-        end
+        query = query * ", " * constraint_to_sql(constraint)
     end
 
     query = query * ")"
@@ -52,6 +50,18 @@ function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=
     SQLite.execute(db, query)
 
     return query
+end
+
+"""
+    get_column_type(col::Symbol, m::Type{T})::String where {T <: Model}
+    Returns the SQL type of the given column.
+"""
+function get_column_type(col::Symbol, m::Type{T})::String where {T<:Wasabi.Model}
+    t = Wasabi.coltype(m, col)
+    if t isa Union
+        t = union_types(t)[findfirst(x -> x != Nothing, union_types(t))]
+    end
+    return MAPPING_TYPES[t]
 end
 
 function constraint_to_sql(constraint::Wasabi.PrimaryKeyConstraint)::String
@@ -64,10 +74,6 @@ end
 
 function constraint_to_sql(constraint::Wasabi.UniqueConstraint)::String
     return "UNIQUE ($(join(constraint.fields, ", ")))"
-end
-
-function constraint_to_sql(constraint::Wasabi.NotNullConstraint)::String
-    return "NOT NULL ($(join(constraint.fields, ", ")))"
 end
 
 """

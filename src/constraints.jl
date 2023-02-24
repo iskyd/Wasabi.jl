@@ -11,7 +11,3 @@ end
 struct UniqueConstraint <: ModelConstraint
     fields::Vector{Symbol}
 end
-
-struct NotNullConstraint <: ModelConstraint
-    fields::Vector{Symbol}
-end

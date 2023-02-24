@@ -27,6 +27,23 @@ colnames(m::Type{T}) where {T<:Model} = collect(fieldnames(m))
 coltype(m::Type{T}, field::Symbol) where {T<:Model} = fieldtype(m, field)
 
 """
+    isnullable(m::Type{T}, field::Symbol) where {T <: Model}
+    Returns true if the given column is nullable.
+"""
+function isnullable(m::Type{T}, field::Symbol) where {T<:Model}
+    t = coltype(m, field)
+    if t isa Union
+        t = filter(x -> x == Nothing, union_types(t))
+        return length(t) > 0
+    end
+
+    return false
+end
+
+union_types(x::Union) = (x.a, union_types(x.b)...)
+union_types(x::Type) = (x,)
+
+"""
     connect(config::ConnectionConfiguration)
     Connects to the database using the given configuration.
 """
