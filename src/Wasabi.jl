@@ -27,12 +27,17 @@ colnames(m::Type{T}) where {T<:Model} = collect(fieldnames(m))
 coltype(m::Type{T}, field::Symbol) where {T<:Model} = fieldtype(m, field)
 
 """
-    isnullable(m::Type{T}, field::Symbol) where {T <: Model}
+    isnullable(m::Type{T}, field::Symbol, constraints::Vector{S}) where {T <: Model,S<:Wasabi.ModelConstraint}
     Returns true if the given column is nullable.
 """
-function isnullable(m::Type{T}, field::Symbol) where {T<:Model}
+function isnullable(m::Type{T}, field::Symbol, constraints::Vector{S}) where {T<:Model,S<:Wasabi.ModelConstraint}
     t = coltype(m, field)
     if t isa Union
+        primary_key_constraint = findfirst(x -> x isa PrimaryKeyConstraint && field in x.fields, constraints)
+        if primary_key_constraint !== nothing
+            return false
+        end
+        
         t = filter(x -> x == Nothing, union_types(t))
         return length(t) > 0
     end
@@ -91,7 +96,7 @@ end
     model2tuple(m::T) where {T <: Model}
     Converts the given model to a tuple.
 """
-function model2tuple(m::T) where {T <: Model}
+function model2tuple(m::T) where {T<:Model}
     return tuple(map(col -> (col, getfield(m, col)), Wasabi.colnames(T))...)
 end
 
