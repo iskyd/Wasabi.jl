@@ -11,7 +11,7 @@
 ```
 using Wasabi
 
-struct User <: Wasabi.Model
+mutable struct User <: Wasabi.Model
     id::Int
     name::String
 end
@@ -54,4 +54,11 @@ end
 
 res = Wasabi.execute_raw_query(conn, "SELECT * FROM user where name = ?", Any["John Doe"])
 users = Wasabi.df2model(User, res)
+
+u.name = "Jane Doe"
+Wasabi.update(conn, user)
+
+Wasabi.delete(conn, user)
+
+Wasabi.disconnect(conn)
 ```
