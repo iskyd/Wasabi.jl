@@ -1,7 +1,7 @@
 @safetestset "sqlite backend" begin
     using Wasabi
 
-    struct User <: Wasabi.Model
+    mutable struct User <: Wasabi.Model
         id::Int
         name::String
     end
@@ -105,4 +105,18 @@
     user = Wasabi.first(conn, User, 10)
     @test user.id == 10
     @test user.name == "John Doe"
+
+    user.name = "Jane Doe"
+    Wasabi.update(conn, user)
+
+    user = Wasabi.first(conn, User, 10)
+    @test user.id == 10
+    @test user.name == "Jane Doe"
+
+    Wasabi.delete(conn, user)
+
+    user = Wasabi.first(conn, User, 10)
+    @test user === nothing
+
+    Wasabi.disconnect(conn)
 end

@@ -124,6 +124,18 @@ function rollback end
 """
 function insert end
 
+"""
+    update(db::Any, model::T) where {T <: Model}
+    Updates the given model in the database.
+"""
+function update end
+
+"""
+    delete(db::Any, model::T) where {T <: Model}
+    Deletes the given model from the database.
+"""
+function delete end
+
 include("constraints.jl")
 include("backends/sqlite/sqlite.jl")
 

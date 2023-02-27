@@ -114,3 +114,17 @@ function Wasabi.insert(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     query = "INSERT INTO $(Wasabi.tablename(typeof(model))) ($(join(fields, ", "))) VALUES ($(join(fill("?", length(fields)), ", ")))"
     SQLite.DBInterface.execute(db, query, values)
 end
+
+function Wasabi.delete(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
+    query = "DELETE FROM $(Wasabi.tablename(typeof(model))) WHERE id = ?"
+    SQLite.DBInterface.execute(db, query, Any[model.id])
+end
+
+function Wasabi.update(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
+    columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
+    fields = map(column -> column[1], columns)
+    values = (map(column -> column[2], columns)..., model.id)
+
+    query = "UPDATE $(Wasabi.tablename(typeof(model))) SET $(join([String(field) * " = ?" for field in fields], ", ")) WHERE id = ?"
+    SQLite.DBInterface.execute(db, query, values)
+end
