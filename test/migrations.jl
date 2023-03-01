@@ -1,0 +1,3 @@
+@safetestset "migrations" begin
+    
+end

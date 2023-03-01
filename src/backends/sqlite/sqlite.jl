@@ -128,3 +128,14 @@ function Wasabi.update(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     query = "UPDATE $(Wasabi.tablename(typeof(model))) SET $(join([String(field) * " = ?" for field in fields], ", ")) WHERE id = ?"
     SQLite.DBInterface.execute(db, query, values)
 end
+
+function Wasabi.delete_all(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
+    query = "DELETE FROM $(Wasabi.tablename(m))"
+    SQLite.DBInterface.execute(db, query)
+end
+
+function Wasabi.all(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
+    query = "SELECT * FROM $(Wasabi.tablename(m))"
+    df = Wasabi.execute_raw_query(db, query)
+    return Wasabi.df2model(m, df)
+end

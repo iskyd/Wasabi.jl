@@ -118,5 +118,11 @@
     user = Wasabi.first(conn, User, 10)
     @test user === nothing
 
+    users = Wasabi.all(conn, User)
+    @test length(users) == 3
+
+    Wasabi.delete_all(conn, User)
+    @test length(Wasabi.all(conn, User)) == 0
+
     Wasabi.disconnect(conn)
 end

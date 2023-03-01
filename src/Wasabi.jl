@@ -136,7 +136,21 @@ function update end
 """
 function delete end
 
+"""
+    delete_all(db::Any, m::Type{T}) where {T <: Model}
+    Deletes all rows from the given model.
+"""
+function delete_all end
+
+"""
+    all(db::Any, m::Type{T}) where {T <: Model}
+    Returns all rows of the given model.
+"""
+function all end
+
+
 include("constraints.jl")
 include("backends/sqlite/sqlite.jl")
+include("migrations.jl")
 
 end
