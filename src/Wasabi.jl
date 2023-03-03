@@ -148,7 +148,7 @@ function delete_all end
 """
 function all end
 
-
+include("exceptions.jl")
 include("constraints.jl")
 include("backends/sqlite/sqlite.jl")
 include("migrations.jl")

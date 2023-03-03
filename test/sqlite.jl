@@ -125,4 +125,6 @@
     @test length(Wasabi.all(conn, User)) == 0
 
     Wasabi.disconnect(conn)
+
+    rm("test.db", recursive=true)
 end

@@ -9,7 +9,7 @@ constraints = [
     Wasabi.UniqueConstraint([:version])
 ]
 
-function get_versions(path::String)::Vector{Tuple{String,Dates.DateTime}}
+function get_migrations_version(path::String)::Vector{Tuple{String,Dates.DateTime}}
     versions = Tuple{String,Dates.DateTime}[]
     created_at_reg = r"Created at: ([A-Za-z0-9\-:.]+)"
     for version in readdir(path)
@@ -17,60 +17,83 @@ function get_versions(path::String)::Vector{Tuple{String,Dates.DateTime}}
             content = read(f, String)
             created_at = match(created_at_reg, content)[1]
 
-            push!(versions, (version, Dates.DateTime(created_at)))
+            push!(versions, (replace(version, ".jl" => ""), Dates.DateTime(created_at)))
         end
     end
 
     return versions
 end
 
-function migrate(db::Any, path::String)
-    current_version = nothing
+function get_current_migration_version(db::Any)
     try
         res = Wasabi.all(db, Migration)
-        current_version = res[1].version
+        return res[1].version
     catch e
-        current_version = nothing
+        return nothing
+    end
+end
+
+function get_last_migration_version(path::String)
+    versions = get_migrations_version(path)
+    sort!(versions, by=x -> x[2], rev=true)
+    return replace(versions[1][1], ".jl" => "")
+end
+
+function execute_migrations(db::Any, path::String, target_version::String)
+    current_version = Wasabi.get_current_migration_version(db)
+    if !isfile(joinpath(path, target_version * ".jl"))
+        throw(Wasabi.MigrationFileNotFound(joinpath(path, target_version * ".jl")))
     end
 
-    versions = get_versions(path)
+    direction = "up"
+    versions = get_migrations_version(path)
     sort!(versions, by=x -> x[2], rev=false)
 
     if current_version !== nothing
-        cur_idx = findfirst(x -> replace(x[1], ".jl" => "") == current_version, versions)
-        versions = versions[cur_idx+1:end]
-    end
-
-    try
-        Wasabi.begin_transaction(db)
-        for (version, _) in versions
-            include(joinpath(path, version))
-            Base.invokelatest(up, db)
+        if current_version == target_version
+            return
         end
 
-        new_version = replace(versions[end][1], ".jl" => "")
+        cur_idx = findfirst(x -> x[1] == current_version, versions)
+        next_idx = findfirst(x -> x[1] == target_version, versions)
 
-        Wasabi.delete_all(db, Migration)
+        if cur_idx > next_idx
+            direction = "down"
+            versions_to_execute = sort(versions, by=x -> x[2], rev=true)[next_idx:cur_idx-1]
+        else
+            direction = "up"
+            versions_to_execute = versions[cur_idx+1:next_idx]
+        end
+    else
+        next_idx = findfirst(x -> x[1] == target_version, versions)
+        versions_to_execute = versions[1:next_idx]
+    end
 
-        migration = Migration(new_version)
+    Wasabi.begin_transaction(db)
+    try
+        for (version, _) in versions_to_execute
+            include(joinpath(path, version * ".jl"))
+            if direction == "up"
+                Base.invokelatest(up, db)
+            else
+                Base.invokelatest(down, db)
+            end
+        end
+
+        Wasabi.delete_all(db, Wasabi.Migration)
+        migration = Wasabi.Migration(target_version)
         Wasabi.insert(db, migration)
 
         Wasabi.commit(db)
     catch e
         Wasabi.rollback(db)
-        rethrow(e)
+        throw(e)
     end
-end
-
-function get_last_version(path::String)
-    versions = get_versions(path)
-    sort!(versions, by=x->x[2], rev=true)
-    return replace(versions[1][1], ".jl" => "")
 end
 
 function generate_migration(path::String)::String
     version = randstring()
-    last_version = get_last_version(path)
+    last_version = get_last_migration_version(path)
     created_at = Dates.format(now(), "yyyy-mm-ddTHH:MM:SS.sss")
 
     content = """
@@ -113,11 +136,11 @@ function init_migration(path::String)::String
         constraints = [
             Wasabi.UniqueConstraint([:version])
         ]
-        Wasabi.create_schema(db, Migration, constraints)
+        Wasabi.create_schema(db, Wasabi.Migration, constraints)
     end
 
     function down(db::Any)
-        Wasabi.delete_schema(db, Migration)
+        Wasabi.delete_schema(db, Wasabi.Migration)
     end
     """
 
