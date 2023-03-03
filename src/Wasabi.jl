@@ -37,7 +37,7 @@ function isnullable(m::Type{T}, field::Symbol, constraints::Vector{S}) where {T<
         if primary_key_constraint !== nothing
             return false
         end
-        
+
         t = filter(x -> x == Nothing, union_types(t))
         return length(t) > 0
     end
@@ -47,6 +47,22 @@ end
 
 union_types(x::Union) = (x.a, union_types(x.b)...)
 union_types(x::Type) = (x,)
+
+"""
+    df2model(m::Type{T}, df::DataFrame) where {T <: Model}
+    Converts the given DataFrame to the given model.
+"""
+function df2model(m::Type{T}, df::DataFrame) where {T<:Wasabi.Model}
+    return [m(map(col -> row[col], Wasabi.colnames(m))...) for row in eachrow(df)]
+end
+
+"""
+    model2tuple(m::T) where {T <: Model}
+    Converts the given model to a tuple.
+"""
+function model2tuple(m::T) where {T<:Model}
+    return tuple(map(col -> (col, getfield(m, col)), Wasabi.colnames(T))...)
+end
 
 """
     connect(config::ConnectionConfiguration)
@@ -85,38 +101,10 @@ function execute_raw_query end
 function first end
 
 """
-    df2model(m::Type{T}, df::DataFrame) where {T <: Model}
-    Converts the given DataFrame to the given model.
+    all(db::Any, m::Type{T}) where {T <: Model}
+    Returns all rows of the given model.
 """
-function df2model(m::Type{T}, df::DataFrame) where {T<:Wasabi.Model}
-    return [m(map(col -> row[col], Wasabi.colnames(m))...) for row in eachrow(df)]
-end
-
-"""
-    model2tuple(m::T) where {T <: Model}
-    Converts the given model to a tuple.
-"""
-function model2tuple(m::T) where {T<:Model}
-    return tuple(map(col -> (col, getfield(m, col)), Wasabi.colnames(T))...)
-end
-
-"""
-    begin_transaction(db::Any)
-    Begins a transaction.
-"""
-function begin_transaction end
-
-"""
-    commit(db::Any)
-    Commits the current transaction.
-"""
-function commit end
-
-"""
-    rollback(db::Any)
-    Rolls back the current transaction.
-"""
-function rollback end
+function all end
 
 """
     insert(db::Any, model::T) where {T <: Model}
@@ -143,10 +131,22 @@ function delete end
 function delete_all end
 
 """
-    all(db::Any, m::Type{T}) where {T <: Model}
-    Returns all rows of the given model.
+    begin_transaction(db::Any)
+    Begins a transaction.
 """
-function all end
+function begin_transaction end
+
+"""
+    commit(db::Any)
+    Commits the current transaction.
+"""
+function commit end
+
+"""
+    rollback(db::Any)
+    Rolls back the current transaction.
+"""
+function rollback end
 
 include("exceptions.jl")
 include("constraints.jl")
