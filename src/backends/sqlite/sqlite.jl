@@ -23,20 +23,11 @@ function Wasabi.disconnect(db::SQLite.DB)::Nothing
     return nothing
 end
 
-"""
-    delete_schema(db::Any, m::Type{T}) where {T <: Model}
-    Deletes the schema for the given model.
-"""
 function Wasabi.delete_schema(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
     query = "DROP TABLE IF EXISTS $(Wasabi.tablename(m))"
     SQLite.execute(db, query)
 end
 
-"""
-    create_schema(db::Any, m::Type{T}, constraints::Vector{ModelConstraint}) where {T <: Model}
-    Creates the schema for the given model.
-    Returns the query used to create the schema.
-"""
 function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=Wasabi.ModelConstraint[]) where {T<:Wasabi.Model,S<:Wasabi.ModelConstraint}
     columns = [(col, get_column_type(col, m)) for col in Wasabi.colnames(m)]
     query = "CREATE TABLE IF NOT EXISTS $(Wasabi.tablename(m)) ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1], constraints) ? "" : " NOT NULL") for col in columns], ", "))"
@@ -52,10 +43,6 @@ function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=
     return query
 end
 
-"""
-    get_column_type(col::Symbol, m::Type{T})::String where {T <: Model}
-    Returns the SQL type of the given column.
-"""
 function get_column_type(col::Symbol, m::Type{T})::String where {T<:Wasabi.Model}
     t = Wasabi.coltype(m, col)
     if t isa Union
@@ -76,10 +63,6 @@ function constraint_to_sql(constraint::Wasabi.UniqueConstraint)::String
     return "UNIQUE ($(join(constraint.fields, ", ")))"
 end
 
-"""
-    execute_raw_query(db::SQLite.DB, query::String, params::Vector{Any})
-    Executes the given query with the given parameters.
-"""
 function Wasabi.execute_raw_query(db::SQLite.DB, query::String, params::Vector{Any}=Any[])
     return SQLite.DBInterface.execute(db, query, params) |> DataFrame
 end
