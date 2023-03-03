@@ -7,7 +7,7 @@
     path = mkdir("migrations/")
     @test Wasabi.get_migrations_version(path) == []
 
-    init_version = Wasabi.init_migration(path)
+    init_version = Wasabi.init_migrations(path)
     versions = Wasabi.get_migrations_version(path)
     @test length(versions) == 1
     @test versions[1][1] == init_version

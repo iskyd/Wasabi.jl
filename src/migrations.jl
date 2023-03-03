@@ -117,7 +117,7 @@ function generate_migration(path::String)::String
     return version
 end
 
-function init_migration(path::String)::String
+function init_migrations(path::String)::String
     if length(readdir(path)) > 0
         error("Directory is not empty")
     end
