@@ -5,8 +5,11 @@ import Wasabi
 export SQLiteConnectionConfiguration
 
 MAPPING_TYPES = Dict{Type,String}(
-    Int64 => "INTEGER",
-    String => "TEXT"
+    Int => "INTEGER",
+    String => "TEXT",
+    Bool => "INTEGER",
+    Float => "REAL",
+    Any => "BLOB"
 )
 
 struct SQLiteConnectionConfiguration <: Wasabi.ConnectionConfiguration
