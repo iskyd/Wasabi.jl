@@ -5,10 +5,10 @@ import Wasabi
 export SQLiteConnectionConfiguration
 
 MAPPING_TYPES = Dict{Type,String}(
-    Int => "INTEGER",
+    Int64 => "INTEGER",
     String => "TEXT",
     Bool => "INTEGER",
-    Float => "REAL",
+    Float64 => "REAL",
     Any => "BLOB"
 )
 
