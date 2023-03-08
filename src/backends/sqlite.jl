@@ -1,10 +1,7 @@
 using SQLite
 using DataFrames
-import Wasabi
 
-export SQLiteConnectionConfiguration
-
-MAPPING_TYPES = Dict{Type,String}(
+SQLITE_MAPPING_TYPES = Dict{Type,String}(
     Int64 => "INTEGER",
     String => "TEXT",
     Bool => "INTEGER",
@@ -32,11 +29,11 @@ function Wasabi.delete_schema(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
 end
 
 function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=Wasabi.ModelConstraint[]) where {T<:Wasabi.Model,S<:Wasabi.ModelConstraint}
-    columns = [(col, get_column_type(col, m)) for col in Wasabi.colnames(m)]
+    columns = [(col, coltype(POSTGRES_MAPPING_TYPES, m, col)) for col in Wasabi.colnames(m)]
     query = "CREATE TABLE IF NOT EXISTS $(Wasabi.tablename(m)) ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1], constraints) ? "" : " NOT NULL") for col in columns], ", "))"
 
     for constraint in constraints
-        query = query * ", " * constraint_to_sql(constraint)
+        query = query * ", " * sqlite_constraint_to_sql(constraint)
     end
 
     query = query * ")"
@@ -46,23 +43,15 @@ function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=
     return query
 end
 
-function get_column_type(col::Symbol, m::Type{T})::String where {T<:Wasabi.Model}
-    t = Wasabi.coltype(m, col)
-    if t isa Union
-        t = union_types(t)[findfirst(x -> x != Nothing, union_types(t))]
-    end
-    return MAPPING_TYPES[t]
-end
-
-function constraint_to_sql(constraint::Wasabi.PrimaryKeyConstraint)::String
+function sqlite_constraint_to_sql(constraint::Wasabi.PrimaryKeyConstraint)::String
     return "PRIMARY KEY ($(join(constraint.fields, ", ")))"
 end
 
-function constraint_to_sql(constraint::Wasabi.ForeignKeyConstraint)::String
+function sqlite_constraint_to_sql(constraint::Wasabi.ForeignKeyConstraint)::String
     return "FOREIGN KEY ($(join(constraint.fields, ", "))) REFERENCES $(constraint.foreign_table) ($(join(constraint.foreign_fields, ", ")))"
 end
 
-function constraint_to_sql(constraint::Wasabi.UniqueConstraint)::String
+function sqlite_constraint_to_sql(constraint::Wasabi.UniqueConstraint)::String
     return "UNIQUE ($(join(constraint.fields, ", ")))"
 end
 
@@ -74,7 +63,7 @@ function Wasabi.begin_transaction(db::SQLite.DB)
     SQLite.execute(db, "BEGIN TRANSACTION")
 end
 
-function Wasabi.commit(db::SQLite.DB)
+function Wasabi.commit!(db::SQLite.DB)
     SQLite.execute(db, "COMMIT TRANSACTION")
 end
 
@@ -92,7 +81,7 @@ function Wasabi.first(db::SQLite.DB, m::Type{T}, id) where {T<:Wasabi.Model}
     return Wasabi.df2model(m, df)[1]
 end
 
-function Wasabi.insert(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
+function Wasabi.insert!(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
     fields = map(column -> column[1], columns)
     values = map(column -> column[2], columns)
@@ -101,12 +90,12 @@ function Wasabi.insert(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     SQLite.DBInterface.execute(db, query, values)
 end
 
-function Wasabi.delete(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
+function Wasabi.delete!(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     query = "DELETE FROM $(Wasabi.tablename(typeof(model))) WHERE id = ?"
     SQLite.DBInterface.execute(db, query, Any[model.id])
 end
 
-function Wasabi.update(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
+function Wasabi.update!(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
     fields = map(column -> column[1], columns)
     values = (map(column -> column[2], columns)..., model.id)
@@ -115,7 +104,7 @@ function Wasabi.update(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     SQLite.DBInterface.execute(db, query, values)
 end
 
-function Wasabi.delete_all(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
+function Wasabi.delete_all!(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
     query = "DELETE FROM $(Wasabi.tablename(m))"
     SQLite.DBInterface.execute(db, query)
 end

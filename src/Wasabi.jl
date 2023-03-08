@@ -19,19 +19,12 @@ tablename(m::Type{T}) where {T<:Model} = join("_$word" for word in lowercase.(sp
 """
 colnames(m::Type{T}) where {T<:Model} = collect(fieldnames(m))
 
-
-"""
-    coltype(m::Type{T}, field::Symbol) where {T <: Model}
-    Returns the julia type of the given column.
-"""
-coltype(m::Type{T}, field::Symbol) where {T<:Model} = fieldtype(m, field)
-
 """
     isnullable(m::Type{T}, field::Symbol, constraints::Vector{S}) where {T <: Model,S<:Wasabi.ModelConstraint}
     Returns true if the given column is nullable.
 """
 function isnullable(m::Type{T}, field::Symbol, constraints::Vector{S}) where {T<:Model,S<:Wasabi.ModelConstraint}
-    t = coltype(m, field)
+    t = fieldtype(m, field)
     if t isa Union
         primary_key_constraint = findfirst(x -> x isa PrimaryKeyConstraint && field in x.fields, constraints)
         if primary_key_constraint !== nothing
@@ -62,6 +55,18 @@ end
 """
 function model2tuple(m::T) where {T<:Model}
     return tuple(map(col -> (col, getfield(m, col)), Wasabi.colnames(T))...)
+end
+
+"""
+    coltype(mapping::Dict{Type,String}, col::Symbol, m::Type{T})::String where {T <: Model}
+    Returns the column type for the given column and model.
+"""
+function coltype(mapping::Dict{Type,String}, m::Type{T}, col::Symbol)::String where {T<:Wasabi.Model}
+    t = fieldtype(m, col)
+    if t isa Union
+        t = union_types(t)[findfirst(x -> x != Nothing, union_types(t))]
+    end
+    return mapping[t]
 end
 
 """
@@ -110,25 +115,25 @@ function all end
     insert(db::Any, model::T) where {T <: Model}
     Inserts the given model into the database.
 """
-function insert end
+function insert! end
 
 """
     update(db::Any, model::T) where {T <: Model}
     Updates the given model in the database.
 """
-function update end
+function update! end
 
 """
     delete(db::Any, model::T) where {T <: Model}
     Deletes the given model from the database.
 """
-function delete end
+function delete! end
 
 """
     delete_all(db::Any, m::Type{T}) where {T <: Model}
     Deletes all rows from the given model.
 """
-function delete_all end
+function delete_all! end
 
 """
     begin_transaction(db::Any)
@@ -137,10 +142,10 @@ function delete_all end
 function begin_transaction end
 
 """
-    commit(db::Any)
+    commit!(db::Any)
     Commits the current transaction.
 """
-function commit end
+function commit! end
 
 """
     rollback(db::Any)
@@ -150,7 +155,8 @@ function rollback end
 
 include("exceptions.jl")
 include("constraints.jl")
-include("backends/sqlite/sqlite.jl")
+include("backends/sqlite.jl")
+include("backends/postgres.jl")
 include("migrations.jl")
 
 end

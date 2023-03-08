@@ -6,6 +6,11 @@
         name::String
     end
 
-    @test Wasabi.coltype(User, :id) == Int64
-    @test Wasabi.coltype(User, :name) == String
+    SAMPLE_MAPPING = Dict{Type,String}(
+        Int => "INTEGER",
+        String => "TEXT"
+    )
+
+    @test Wasabi.coltype(SAMPLE_MAPPING, User, :id) == "INTEGER"
+    @test Wasabi.coltype(SAMPLE_MAPPING, User, :name) == "TEXT"
 end

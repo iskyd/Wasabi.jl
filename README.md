@@ -39,14 +39,14 @@ Wasabi.create_schema(conn, User, user_constraints)
 Wasabi.create_schema(conn, UserProfile, user_profile_constraints)
 
 user = User(1, "John Doe")
-Wasabi.insert(conn, user)
+Wasabi.insert!(conn, user)
 
 u = Wasabi.first(conn, User, 1)
 
 Wasabi.begin_transaction(conn)
 try
-    Wasabi.insert(conn, user)
-    Wasabi.commit(conn)
+    Wasabi.insert!(conn, user)
+    Wasabi.commit!(conn)
 catch e
     Wasabi.rollback(conn)
     rethrow(e)
@@ -56,9 +56,9 @@ res = Wasabi.execute_raw_query(conn, "SELECT * FROM user where name = ?", Any["J
 users = Wasabi.df2model(User, res)
 
 u.name = "Jane Doe"
-Wasabi.update(conn, user)
+Wasabi.update!(conn, user)
 
-Wasabi.delete(conn, user)
+Wasabi.delete!(conn, user)
 
 Wasabi.disconnect(conn)
 ```

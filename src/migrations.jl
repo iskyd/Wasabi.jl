@@ -80,11 +80,11 @@ function execute_migrations(db::Any, path::String, target_version::String)
             end
         end
 
-        Wasabi.delete_all(db, Wasabi.Migration)
+        Wasabi.delete_all!(db, Wasabi.Migration)
         migration = Wasabi.Migration(target_version)
-        Wasabi.insert(db, migration)
+        Wasabi.insert!(db, migration)
 
-        Wasabi.commit(db)
+        Wasabi.commit!(db)
     catch e
         Wasabi.rollback(db)
         throw(e)
