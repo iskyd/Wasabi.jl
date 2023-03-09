@@ -1,3 +1,6 @@
+module Migrations
+
+using Wasabi
 using Random
 using Dates
 
@@ -5,11 +8,15 @@ struct Migration <: Wasabi.Model
     version::String
 end
 
+struct MigrationFileNotFound <: Exception
+    path::String
+end
+
 constraints = [
     Wasabi.UniqueConstraint([:version])
 ]
 
-function get_migrations_version(path::String)::Vector{Tuple{String,Dates.DateTime}}
+function get_versions(path::String)::Vector{Tuple{String,Dates.DateTime}}
     versions = Tuple{String,Dates.DateTime}[]
     created_at_reg = r"Created at: ([A-Za-z0-9\-:.]+)"
     for version in readdir(path)
@@ -24,7 +31,7 @@ function get_migrations_version(path::String)::Vector{Tuple{String,Dates.DateTim
     return versions
 end
 
-function get_current_migration_version(db::Any)
+function get_current_version(db::Any)
     try
         res = Wasabi.all(db, Migration)
         return res[1].version
@@ -33,20 +40,20 @@ function get_current_migration_version(db::Any)
     end
 end
 
-function get_last_migration_version(path::String)
-    versions = get_migrations_version(path)
+function get_last_version(path::String)
+    versions = get_versions(path)
     sort!(versions, by=x -> x[2], rev=true)
     return replace(versions[1][1], ".jl" => "")
 end
 
-function execute_migrations(db::Any, path::String, target_version::String)
-    current_version = Wasabi.get_current_migration_version(db)
+function execute(db::Any, path::String, target_version::String)
+    current_version = get_current_version(db)
     if !isfile(joinpath(path, target_version * ".jl"))
-        throw(Wasabi.MigrationFileNotFound(joinpath(path, target_version * ".jl")))
+        throw(MigrationFileNotFound(joinpath(path, target_version * ".jl")))
     end
 
     direction = "up"
-    versions = get_migrations_version(path)
+    versions = get_versions(path)
     sort!(versions, by=x -> x[2], rev=false)
 
     if current_version !== nothing
@@ -80,8 +87,8 @@ function execute_migrations(db::Any, path::String, target_version::String)
             end
         end
 
-        Wasabi.delete_all!(db, Wasabi.Migration)
-        migration = Wasabi.Migration(target_version)
+        Wasabi.delete_all!(db, Migration)
+        migration = Migration(target_version)
         Wasabi.insert!(db, migration)
 
         Wasabi.commit!(db)
@@ -91,9 +98,9 @@ function execute_migrations(db::Any, path::String, target_version::String)
     end
 end
 
-function generate_migration(path::String)::String
+function generate(path::String)::String
     version = randstring()
-    last_version = get_last_migration_version(path)
+    last_version = get_last_version(path)
     created_at = Dates.format(now(), "yyyy-mm-ddTHH:MM:SS.sss")
 
     content = """
@@ -117,7 +124,7 @@ function generate_migration(path::String)::String
     return version
 end
 
-function init_migrations(path::String)::String
+function init(path::String)::String
     if length(readdir(path)) > 0
         error("Directory is not empty")
     end
@@ -136,11 +143,11 @@ function init_migrations(path::String)::String
         constraints = [
             Wasabi.UniqueConstraint([:version])
         ]
-        Wasabi.create_schema(db, Wasabi.Migration, constraints)
+        Wasabi.create_schema(db, Migrations.Migration, constraints)
     end
 
     function down(db::Any)
-        Wasabi.delete_schema(db, Wasabi.Migration)
+        Wasabi.delete_schema(db, Migrations.Migration)
     end
     """
 
@@ -149,4 +156,6 @@ function init_migrations(path::String)::String
     end
 
     return version
+end
+
 end

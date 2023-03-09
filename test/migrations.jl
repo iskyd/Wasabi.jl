@@ -5,32 +5,32 @@
     conn = Wasabi.connect(configuration)
 
     path = mkdir("migrations/")
-    @test Wasabi.get_migrations_version(path) == []
+    @test Migrations.get_versions(path) == []
 
-    init_version = Wasabi.init_migrations(path)
-    versions = Wasabi.get_migrations_version(path)
+    init_version = Migrations.init(path)
+    versions = Migrations.get_versions(path)
     @test length(versions) == 1
     @test versions[1][1] == init_version
 
-    last_version = Wasabi.generate_migration(path)
-    versions = Wasabi.get_migrations_version(path)
+    last_version = Migrations.generate(path)
+    versions = Migrations.get_versions(path)
     @test length(versions) == 2
 
-    @test last_version == Wasabi.get_last_migration_version(path)
+    @test last_version == Migrations.get_last_version(path)
 
-    @test Wasabi.get_current_migration_version(conn) === nothing
+    @test Migrations.get_current_version(conn) === nothing
 
     try
-        Wasabi.execute_migrations(conn, path, "elDwLsbc")
+        Migrations.execute(conn, path, "elDwLsbc")
     catch e
-        @test e isa Wasabi.MigrationFileNotFound
+        @test e isa Migrations.MigrationFileNotFound
     end
 
-    Wasabi.execute_migrations(conn, path, last_version)
-    @test Wasabi.get_current_migration_version(conn) == last_version
+    Migrations.execute(conn, path, last_version)
+    @test Migrations.get_current_version(conn) == last_version
 
-    Wasabi.execute_migrations(conn, path, init_version)
-    @test Wasabi.get_current_migration_version(conn) == init_version
+    Migrations.execute(conn, path, init_version)
+    @test Migrations.get_current_version(conn) == init_version
 
     rm(path, recursive=true)
     rm("test.db")

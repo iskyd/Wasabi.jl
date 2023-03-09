@@ -2,6 +2,8 @@ module Wasabi
 
 using DataFrames
 
+export Migrations
+
 abstract type Model end
 abstract type ModelConstraint end
 abstract type ConnectionConfiguration end
@@ -153,7 +155,6 @@ function commit! end
 """
 function rollback end
 
-include("exceptions.jl")
 include("constraints.jl")
 include("backends/sqlite.jl")
 include("backends/postgres.jl")
