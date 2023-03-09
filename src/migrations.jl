@@ -16,6 +16,10 @@ constraints = [
     Wasabi.UniqueConstraint([:version])
 ]
 
+"""
+    get_versions(path::String)::Vector{Tuple{String,Dates.DateTime}}
+    Returns a vector of tuples containing the version and the creation date of each migration file.
+"""
 function get_versions(path::String)::Vector{Tuple{String,Dates.DateTime}}
     versions = Tuple{String,Dates.DateTime}[]
     created_at_reg = r"Created at: ([A-Za-z0-9\-:.]+)"
@@ -31,6 +35,10 @@ function get_versions(path::String)::Vector{Tuple{String,Dates.DateTime}}
     return versions
 end
 
+"""
+    get_current_version(db::Any)::Union{String,Nothing}
+    Returns the current version of the database.
+"""
 function get_current_version(db::Any)
     try
         res = Wasabi.all(db, Migration)
@@ -40,12 +48,20 @@ function get_current_version(db::Any)
     end
 end
 
+"""
+    get_last_version(path::String)::String
+    Returns the last version of the database.
+"""
 function get_last_version(path::String)
     versions = get_versions(path)
     sort!(versions, by=x -> x[2], rev=true)
     return replace(versions[1][1], ".jl" => "")
 end
 
+"""
+    execute(db::Any, path::String, target_version::String)
+    Executes the migrations to the target version.
+"""
 function execute(db::Any, path::String, target_version::String)
     current_version = get_current_version(db)
     if !isfile(joinpath(path, target_version * ".jl"))
@@ -98,6 +114,10 @@ function execute(db::Any, path::String, target_version::String)
     end
 end
 
+"""
+    generate(path::String)::String
+    Generates a new migration file.
+"""
 function generate(path::String)::String
     version = randstring()
     last_version = get_last_version(path)
@@ -124,6 +144,10 @@ function generate(path::String)::String
     return version
 end
 
+"""
+    init(path::String)::String
+    Initializes the migrations directory.
+"""
 function init(path::String)::String
     if length(readdir(path)) > 0
         error("Directory is not empty")
