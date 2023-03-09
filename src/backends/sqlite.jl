@@ -39,8 +39,6 @@ function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=
     query = query * ")"
 
     SQLite.execute(db, query)
-
-    return query
 end
 
 function sqlite_constraint_to_sql(constraint::Wasabi.PrimaryKeyConstraint)::String

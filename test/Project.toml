@@ -1,6 +1,8 @@
 [deps]
+LibPQ = "194296ae-ab2e-5f79-8cd4-7183a0a5a0d1"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
+SimpleMock = "a896ed2c-15a5-4479-b61d-a0e88e2a1d25"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"

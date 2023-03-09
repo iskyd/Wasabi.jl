@@ -23,7 +23,6 @@ end
 
 Wasabi.disconnect(conn::LibPQ.Connection)::Nothing = LibPQ.close(conn)
 
-
 function Wasabi.delete_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi.Model}
     query = "DROP TABLE IF EXISTS \"$(Wasabi.tablename(m))\""
     LibPQ.execute(conn, query)
@@ -40,8 +39,6 @@ function Wasabi.create_schema(conn::LibPQ.Connection, m::Type{T}, constraints::V
     query = query * ")"
 
     LibPQ.execute(conn, query)
-
-    return query
 end
 
 function postgres_constraint_to_sql(constraint::Wasabi.PrimaryKeyConstraint)::String
