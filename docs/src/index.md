@@ -9,6 +9,4 @@ Documentation for [Wasabi](https://github.com/iskyd/Wasabi.jl).
 ```@index
 ```
 
-```@autodocs
-Modules = [Wasabi]
-```
+
