@@ -1,18 +1,5 @@
-@safetestset "sqlite backend" begin
-    using Wasabi
+@testset "postgres" begin
     using SQLite
-    using SimpleMock
-
-    mutable struct User <: Wasabi.Model
-        id::Int
-        name::String
-    end
-
-    struct UserProfile <: Wasabi.Model
-        id::Int
-        user_id::Int
-        bio::Union{String,Nothing}
-    end
 
     constraints = [
         Wasabi.PrimaryKeyConstraint([:id])
@@ -21,7 +8,10 @@
     configuration = Wasabi.SQLiteConnectionConfiguration("test.db")
     conn = Wasabi.connect(configuration)
 
-    mock((SQLite.execute, SQLite.DB, String) => Mock((db, query) -> query)) do sqlite_execute
+    Mocking.activate()
+    patch = @patch SQLite.execute(db::SQLite.DB, query::String) = query
+
+    apply(patch) do
         @test Wasabi.delete_schema(conn, User) == "DROP TABLE IF EXISTS user"
         @test Wasabi.delete_schema(conn, UserProfile) == "DROP TABLE IF EXISTS user_profile"
         @test Wasabi.create_schema(conn, User) == "CREATE TABLE IF NOT EXISTS user (id INTEGER NOT NULL, name TEXT NOT NULL)"
@@ -33,7 +23,7 @@
         Wasabi.ForeignKeyConstraint([:id], :user, [:id])
     ]
 
-    mock((SQLite.execute, SQLite.DB, String) => Mock((db, query) -> query)) do sqlite_execute
+    apply(patch) do
         @test Wasabi.create_schema(conn, UserProfile, constraints) == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (id) REFERENCES user (id))"
     end
 
@@ -43,9 +33,11 @@
         Wasabi.UniqueConstraint([:user_id])
     ]
 
-    mock((SQLite.execute, SQLite.DB, String) => Mock((db, query) -> query)) do sqlite_execute
+    apply(patch) do
         @test Wasabi.create_schema(conn, UserProfile, constraints) == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES user (id), UNIQUE (user_id))"
     end
+
+    Mocking.deactivate()
 
     Wasabi.delete_schema(conn, User)
     Wasabi.delete_schema(conn, UserProfile)

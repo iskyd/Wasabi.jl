@@ -1,5 +1,6 @@
 using SQLite
 using DataFrames
+using Mocking
 
 SQLITE_MAPPING_TYPES = Dict{Type,String}(
     Int64 => "INTEGER",
@@ -25,7 +26,7 @@ end
 
 function Wasabi.delete_schema(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
     query = "DROP TABLE IF EXISTS $(Wasabi.tablename(m))"
-    SQLite.execute(db, query)
+    @mock SQLite.execute(db, query)
 end
 
 function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=Wasabi.ModelConstraint[]) where {T<:Wasabi.Model,S<:Wasabi.ModelConstraint}
@@ -38,7 +39,7 @@ function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=
 
     query = query * ")"
 
-    SQLite.execute(db, query)
+    @mock SQLite.execute(db, query)
 end
 
 function sqlite_constraint_to_sql(constraint::Wasabi.PrimaryKeyConstraint)::String

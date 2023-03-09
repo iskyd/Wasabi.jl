@@ -1,6 +1,4 @@
-@safetestset "migrations" begin
-    using Wasabi
-
+@testset "migrations" begin
     configuration = Wasabi.SQLiteConnectionConfiguration("test.db")
     conn = Wasabi.connect(configuration)
 

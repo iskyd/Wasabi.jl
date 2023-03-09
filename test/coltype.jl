@@ -1,11 +1,4 @@
-@safetestset "coltype" begin
-    using Wasabi
-
-    struct User <: Wasabi.Model
-        id::Int
-        name::String
-    end
-
+@testset "coltype" begin
     SAMPLE_MAPPING = Dict{Type,String}(
         Int => "INTEGER",
         String => "TEXT"

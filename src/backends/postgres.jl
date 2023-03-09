@@ -1,5 +1,6 @@
 using DataFrames
 using LibPQ
+using Mocking
 
 POSTGRES_MAPPING_TYPES = Dict{Type,String}(
     Int64 => "INTEGER",
@@ -25,7 +26,7 @@ Wasabi.disconnect(conn::LibPQ.Connection)::Nothing = LibPQ.close(conn)
 
 function Wasabi.delete_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi.Model}
     query = "DROP TABLE IF EXISTS \"$(Wasabi.tablename(m))\""
-    LibPQ.execute(conn, query)
+    @mock LibPQ.execute(conn, query)
 end
 
 function Wasabi.create_schema(conn::LibPQ.Connection, m::Type{T}, constraints::Vector{S}=Wasabi.ModelConstraint[]) where {T<:Wasabi.Model,S<:Wasabi.ModelConstraint}
@@ -38,7 +39,7 @@ function Wasabi.create_schema(conn::LibPQ.Connection, m::Type{T}, constraints::V
 
     query = query * ")"
 
-    LibPQ.execute(conn, query)
+    @mock LibPQ.execute(conn, query)
 end
 
 function postgres_constraint_to_sql(constraint::Wasabi.PrimaryKeyConstraint)::String
