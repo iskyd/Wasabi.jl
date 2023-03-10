@@ -1,16 +1,31 @@
-abstract type Query end
+module QueryBuilder
 
-mutable struct SelectQuery{T<:Model} <: Query
-    model::Type{T}
-    columns::Vector{Symbol}
-    limit::Union{Int,Nothing}
-    offset::Union{Int,Nothing}
+using Wasabi
 
-    function SelectQuery(model::Type{T}, columns::Vector{Symbol}, limit::Union{Int,Nothing}, offset::Union{Int,Nothing}) where {T<:Model}
-        new{T}(model, columns, limit, offset)
-    end
+Base.@kwdef mutable struct Query{T<:Wasabi.Model}
+    source::Type{T}
+    select::Vector{Symbol}
+    groupby::Vector{Symbol} = Symbol[]
+    orderby::Vector{Symbol} = Symbol[]
+    limit::Union{Nothing,Int} = nothing
+    offset::Union{Nothing,Int} = nothing
 end
 
-function first(model::Type{T}, id::Int)::SelectQuery where {T<:Model}
-    SelectQuery(model, Wasabi.colnames(model), 1, nothing)
+function select(source::Type{T}, select::Union{Vector{Symbol}, Nothing} = nothing) where {T<:Wasabi.Model}
+    if select === nothing
+        select = Wasabi.colnames(source)
+    end
+    Query(source=source, select=select)
+end
+
+function limit(q::Query, limit::Int)::Query
+    q.limit = limit
+    q
+end
+
+function offset(q::Query, offset::Int)::Query
+    q.offset = offset
+    q
+end
+
 end

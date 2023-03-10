@@ -3,6 +3,7 @@ module Wasabi
 using DataFrames
 
 export Migrations
+export QueryBuilder
 
 abstract type Model end
 abstract type ModelConstraint end
@@ -158,6 +159,7 @@ function rollback end
 include("constraints.jl")
 include("backends/sqlite.jl")
 include("backends/postgres.jl")
+include("builder.jl")
 include("migrations.jl")
 
 end

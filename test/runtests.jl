@@ -5,6 +5,7 @@ using Pkg
 using Test, TestSetExtensions
 using Wasabi
 using Mocking
+using Pipe
 
 @testset ExtendedTestSet "Wasabi tests" begin
     mutable struct User <: Wasabi.Model
