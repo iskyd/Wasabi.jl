@@ -18,6 +18,7 @@ makedocs(;
         "Home" => "index.md",
         "API" => "api.md",
         "Migrations" => "migrations.md",
+        "Query Builder" => "querybuilder.md",
     ],
 )
 
