@@ -97,6 +97,12 @@ function create_schema end
 function delete_schema end
 
 """
+execute_query(db::Any, query::QueryBuilder.Query)
+Executes the given query.
+"""
+function execute_query end
+
+"""
     execute_raw_query(db::Any, query::String, params::Vector{Any})
     Executes the given query with the given parameters.
 """
@@ -157,9 +163,9 @@ function commit! end
 function rollback end
 
 include("constraints.jl")
-include("backends/sqlite.jl")
-include("backends/postgres.jl")
 include("builder.jl")
 include("migrations.jl")
+include("backends/sqlite.jl")
+include("backends/postgres.jl")
 
 end

@@ -4,6 +4,7 @@ using Pkg
 
 using Test, TestSetExtensions
 using Wasabi
+using Wasabi: QueryBuilder
 using Mocking
 using Pipe
 

@@ -1,6 +1,7 @@
 using DataFrames
 using LibPQ
 using Mocking
+using Wasabi: QueryBuilder
 
 POSTGRES_MAPPING_TYPES = Dict{Type,String}(
     Int64 => "INTEGER",
@@ -56,6 +57,17 @@ end
 
 function Wasabi.execute_raw_query(conn::LibPQ.Connection, query::String, params::Vector{Any}=Any[])
     return LibPQ.execute(conn, query, params) |> DataFrame
+end
+
+function Wasabi.execute_query(db::LibPQ.Connection, q::QueryBuilder.Query)
+    select = join(q.select, ", ")
+    groupby = isempty(q.groupby) ? "" : " GROUP BY " * join(q.groupby, ", ")
+    orderby = isempty(q.orderby) ? "" : " ORDER BY " * join(q.orderby, ", ")
+    limit = q.limit === nothing ? "" : " LIMIT " * string(q.limit)
+    offset = q.offset === nothing ? "" : " OFFSET " * string(q.offset)
+    sql_query = replace("SELECT $select FROM \"$(Wasabi.tablename(q.source))\" $groupby $orderby $limit $offset", r"(\s{2,})" => " ")
+
+    @mock Wasabi.execute_raw_query(db, sql_query)
 end
 
 function Wasabi.begin_transaction(conn::LibPQ.Connection)

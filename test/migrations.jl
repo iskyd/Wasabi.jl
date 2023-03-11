@@ -30,6 +30,8 @@
     Migrations.execute(conn, path, init_version)
     @test Migrations.get_current_version(conn) == init_version
 
+    Wasabi.disconnect(conn)
+    
     rm(path, recursive=true)
     rm("test.db")
 end
