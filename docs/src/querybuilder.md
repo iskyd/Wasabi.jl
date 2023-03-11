@@ -17,7 +17,7 @@ end
 configuration = Wasabi.SQLiteConnectionConfiguration("test.db")
 conn = Wasabi.connect(configuration)
 
-res = @pipe QueryBuilder.select(User, Symbol[:id]) |> QueryBuilder.limit(_, 10) |> QueryBuilder.offset(_, 5) |> QueryBuilder.orderby(_, Symbol[:name]) |> Wasabi.execute_query(conn, _)
+users = @pipe QueryBuilder.select(User) |> QueryBuilder.limit(_, 1) |> Wasabi.execute_query(conn, _) |> Wasabi.df2model(User, _)
 ```
 
 ```@index
