@@ -14,4 +14,13 @@
     @test query.source == User
     @test query.select == Symbol[:name]
     @test query.groupby == Symbol[:name]
+
+    query = @pipe QueryBuilder.select(User, [:name]) |> QueryBuilder.join(_, User, UserProfile, :inner, (:id, :user_id), [:bio])
+    @test query.source == User
+    @test query.select == Symbol[:name]
+    @test query.joins[1].source == User
+    @test query.joins[1].target == UserProfile
+    @test query.joins[1].type == :inner
+    @test query.joins[1].on == (:id, :user_id)
+    @test query.joins[1].select == Symbol[:bio]
 end

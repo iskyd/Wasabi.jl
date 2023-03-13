@@ -20,5 +20,11 @@ using Pipe
         bio::Union{String,Nothing}
     end
 
+    struct UserPhone <: Wasabi.Model
+        id::Int
+        user_profile_id::Int
+        phone::String
+    end
+
     @includetests ARGS
 end

@@ -11,6 +11,13 @@ SQLITE_MAPPING_TYPES = Dict{Type,String}(
     Any => "BLOB"
 )
 
+SQLITE_JOIN_MAPPING = Dict{Symbol,String}(
+    :inner => "INNER JOIN",
+    :left => "LEFT JOIN",
+    :right => "RIGHT JOIN",
+    :outer => "FULL OUTER JOIN"
+)
+
 struct SQLiteConnectionConfiguration <: Wasabi.ConnectionConfiguration
     dbname::String
 end
@@ -55,17 +62,22 @@ function sqlite_constraint_to_sql(constraint::Wasabi.UniqueConstraint)::String
     return "UNIQUE ($(join(constraint.fields, ", ")))"
 end
 
-function Wasabi.execute_raw_query(db::SQLite.DB, query::String, params::Vector{Any}=Any[])
+function Wasabi.execute_raw_query(db::SQLite.DB, query::T, params::Vector{Any}=Any[]) where {T<:AbstractString}
     SQLite.DBInterface.execute(db, query, params) |> DataFrame
 end
 
 function Wasabi.execute_query(db::SQLite.DB, q::QueryBuilder.Query)
-    select = join(map(field -> "$(Wasabi.alias(q.source)).$(String(field))", q.select), ", ")
+    select = join(vcat(
+        map(field -> "$(Wasabi.alias(q.source)).$(String(field))", q.select), 
+        [join(map(field -> "$(Wasabi.alias(join_query.target)).$(String(field))", join_query.select), ", ") for join_query in q.joins]), ", "
+    )
     groupby = isempty(q.groupby) ? "" : " GROUP BY " * join(q.groupby, ", ")
     orderby = isempty(q.orderby) ? "" : " ORDER BY " * join(q.orderby, ", ")
     limit = q.limit === nothing ? "" : " LIMIT " * string(q.limit)
     offset = q.offset === nothing ? "" : " OFFSET " * string(q.offset)
-    sql_query = replace("SELECT $select FROM $(Wasabi.tablename(q.source)) $(Wasabi.alias(q.source)) $groupby $orderby $limit $offset", r"(\s{2,})" => " ")
+    joins_sql_query = join(map(join_query -> " $(SQLITE_JOIN_MAPPING[join_query.type]) $(Wasabi.tablename(join_query.target)) $(Wasabi.alias(join_query.target)) ON $(Wasabi.alias(join_query.source)).$(join_query.on[1]) = $(Wasabi.alias(join_query.target)).$(join_query.on[2])", q.joins), " ")
+
+    sql_query = strip(replace("SELECT $select FROM $(Wasabi.tablename(q.source)) $(Wasabi.alias(q.source)) $joins_sql_query $groupby $orderby $limit $offset", r"(\s{2,})" => " "))
     
     @mock Wasabi.execute_raw_query(db, sql_query)
 end

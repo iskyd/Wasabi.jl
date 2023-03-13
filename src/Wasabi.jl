@@ -109,7 +109,7 @@ Executes the given query.
 function execute_query end
 
 """
-    execute_raw_query(db::Any, query::String, params::Vector{Any})
+    execute_raw_query(db::Any, query::T, params::Vector{Any}) where {T <: AbstractString}
     Executes the given query with the given parameters.
 """
 function execute_raw_query end
