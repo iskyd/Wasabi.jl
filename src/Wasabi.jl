@@ -15,6 +15,12 @@ abstract type ConnectionConfiguration end
 """
 tablename(m::Type{T}) where {T<:Model} = join("_$word" for word in lowercase.(split(String(Base.typename(m).name), r"(?=[A-Z])")))[2:end]
 
+"""
+    alias(m::Type{T}) where {T <: Model}
+    Returns the alias of the table for the given model.
+"""
+alias(m::Type{T}) where {T<:Model} = Wasabi.tablename(m)
+
 
 """
     colnames(m::Type{T}) where {T <: Model}

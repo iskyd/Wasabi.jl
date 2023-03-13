@@ -60,12 +60,12 @@ function Wasabi.execute_raw_query(conn::LibPQ.Connection, query::String, params:
 end
 
 function Wasabi.execute_query(db::LibPQ.Connection, q::QueryBuilder.Query)
-    select = join(q.select, ", ")
+    select = join(map(field -> "$(Wasabi.alias(q.source)).$(String(field))", q.select), ", ")
     groupby = isempty(q.groupby) ? "" : " GROUP BY " * join(q.groupby, ", ")
     orderby = isempty(q.orderby) ? "" : " ORDER BY " * join(q.orderby, ", ")
     limit = q.limit === nothing ? "" : " LIMIT " * string(q.limit)
     offset = q.offset === nothing ? "" : " OFFSET " * string(q.offset)
-    sql_query = replace("SELECT $select FROM \"$(Wasabi.tablename(q.source))\" $groupby $orderby $limit $offset", r"(\s{2,})" => " ")
+    sql_query = replace("SELECT $select FROM \"$(Wasabi.tablename(q.source))\" $(Wasabi.alias(q.source)) $groupby $orderby $limit $offset", r"(\s{2,})" => " ")
 
     @mock Wasabi.execute_raw_query(db, sql_query)
 end

@@ -40,7 +40,7 @@
     patch_execute_raw_query = @patch Wasabi.execute_raw_query(db::SQLite.DB, query::String, params::Vector{Any}=Any[]) = query
     apply(patch_execute_raw_query) do
         query = @pipe QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.limit(_, 1) |> QueryBuilder.offset(_, 1) |> Wasabi.execute_query(conn, _)
-        @test query == "SELECT id, name FROM user LIMIT 1 OFFSET 1"
+        @test query == "SELECT user.id, user.name FROM user user LIMIT 1 OFFSET 1"
     end
 
     Mocking.deactivate()
