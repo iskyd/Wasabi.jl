@@ -4,10 +4,19 @@ using DataFrames
 
 export Migrations
 export QueryBuilder
+export @rq_str
 
 abstract type Model end
 abstract type ModelConstraint end
 abstract type ConnectionConfiguration end
+
+struct RawQuery
+    value::String
+end
+
+macro rq_str(v::String)
+    RawQuery(v)
+end
 
 """
     tablename(m::Type{T}) where {T <: Model}
@@ -32,14 +41,15 @@ colnames(m::Type{T}) where {T<:Model} = collect(fieldnames(m))
     isnullable(m::Type{T}, field::Symbol, constraints::Vector{S}) where {T <: Model,S<:Wasabi.ModelConstraint}
     Returns true if the given column is nullable.
 """
-function isnullable(m::Type{T}, field::Symbol, constraints::Vector{S}) where {T<:Model,S<:Wasabi.ModelConstraint}
+function isnullable(m::Type{T}, field::Symbol) where {T<:Model}
     t = fieldtype(m, field)
-    if t isa Union
-        primary_key_constraint = findfirst(x -> x isa PrimaryKeyConstraint && field in x.fields, constraints)
-        if primary_key_constraint !== nothing
-            return false
-        end
 
+    primary_key_constraint = Wasabi.primary_key(m)
+    if primary_key_constraint !== nothing && field in primary_key_constraint.fields
+        return false
+    end
+
+    if t isa Union
         t = filter(x -> x == Nothing, union_types(t))
         return length(t) > 0
     end

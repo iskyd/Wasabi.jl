@@ -1,7 +1,6 @@
 [deps]
 LibPQ = "194296ae-ab2e-5f79-8cd4-7183a0a5a0d1"
 Mocking = "78c3b35d-d492-501b-9361-3d52fe80e533"
-Pipe = "b98c9c47-44ae-5843-9183-064241ee97a0"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 SimpleMock = "a896ed2c-15a5-4479-b61d-a0e88e2a1d25"

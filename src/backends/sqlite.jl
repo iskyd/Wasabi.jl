@@ -39,7 +39,7 @@ end
 
 function Wasabi.create_schema(db::SQLite.DB, m::Type{T}, constraints::Vector{S}=Wasabi.ModelConstraint[]) where {T<:Wasabi.Model,S<:Wasabi.ModelConstraint}
     columns = [(col, coltype(POSTGRES_MAPPING_TYPES, m, col)) for col in Wasabi.colnames(m)]
-    query = "CREATE TABLE IF NOT EXISTS $(Wasabi.tablename(m)) ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1], constraints) ? "" : " NOT NULL") for col in columns], ", "))"
+    query = "CREATE TABLE IF NOT EXISTS $(Wasabi.tablename(m)) ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1]) ? "" : " NOT NULL") for col in columns], ", "))"
 
     for constraint in constraints
         query = query * ", " * sqlite_constraint_to_sql(constraint)

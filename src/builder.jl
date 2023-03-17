@@ -40,48 +40,58 @@ function select(source::Type{T}, select::Union{Vector{Symbol},Nothing}=nothing) 
 end
 
 """
-    limit(q::Query, limit::Int)::Query
+    limit(limit::Int)
     Sets the limit for the given query.
 """
-function limit(q::Query, limit::Int)::Query
-    q.limit = limit
-    q
+function limit(limit::Int)
+    return function(q::Query)
+        q.limit = limit
+        q
+    end
 end
 
 """
-    offset(q::Query, offset::Int)::Query
+    offset(offset::Int)
     Sets the offset for the given query.
 """
-function offset(q::Query, offset::Int)::Query
-    q.offset = offset
-    q
+function offset(offset::Int)
+    return function(q::Query)
+        q.offset = offset
+        q
+    end
 end
 
 """
-    orderby(q::Query, orderby::Vector{Symbol})::Query
+    orderby(orderby::Vector{Symbol})
     Sets the order by clause for the given query.
 """
-function orderby(q::Query, orderby::Vector{Symbol})::Query
-    q.orderby = orderby
-    q
+function orderby(orderby::Vector{Symbol})
+    return function(q::Query)
+        q.orderby = orderby
+        q
+    end
 end
 
 """
-    groupby(q::Query, groupby::Vector{Symbol})::Query
+    groupby(groupby::Vector{Symbol})
     Sets the group by clause for the given query.
 """
-function groupby(q::Query, groupby::Vector{Symbol})::Query
-    q.groupby = groupby
-    q
+function groupby(groupby::Vector{Symbol})
+    return function(q::Query)
+        q.groupby = groupby
+        q
+    end
 end
 
 """
-    join(q::Query, m::Type{T}, type::Symbol, on::Tuple{Symbol, Symbol}, select::Vector{Symbol} = Symbol[]) where {T <: Model}
+    join(m::Type{T}, type::Symbol, on::Tuple{Symbol, Symbol}, select::Vector{Symbol} = Symbol[]) where {T <: Model}
     Joins the given model to the query.
 """
-function join(q::Query, source::Type{T}, target::Type{S}, type::Symbol, on::Tuple{Symbol,Symbol}, select::Vector{Symbol}=Symbol[]) where {T<:Wasabi.Model, S<:Wasabi.Model}
-    push!(q.joins, Join(source=source, target=target, type=type, on=on, select=select))
-    q
+function join(source::Type{T}, target::Type{S}, type::Symbol, on::Tuple{Symbol,Symbol}, select::Vector{Symbol}=Symbol[]) where {T<:Wasabi.Model, S<:Wasabi.Model}
+    return function(q::Query)
+        push!(q.joins, Join(source=source, target=target, type=type, on=on, select=select))
+        q
+    end
 end
 
 end

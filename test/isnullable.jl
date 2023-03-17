@@ -4,12 +4,10 @@
         name::Union{String,Nothing}
     end
 
-    constraints = [
-        Wasabi.PrimaryKeyConstraint([:id])
-    ]
+    Wasabi.primary_key(m::Type{NullableNameUser}) = Wasabi.PrimaryKeyConstraint(Symbol[:id])
 
-    @test Wasabi.isnullable(NullableNameUser, :id, constraints) == false
-    @test Wasabi.isnullable(NullableNameUser, :name, constraints) == true
+    @test Wasabi.isnullable(NullableNameUser, :id) == false
+    @test Wasabi.isnullable(NullableNameUser, :name) == true
 
     struct NullableUserProfile <: Wasabi.Model
         id::Union{Int,Nothing}
@@ -17,10 +15,8 @@
         bio::Union{String,Nothing}
     end
 
-    constraints = [
-        Wasabi.PrimaryKeyConstraint([:id]),
-        Wasabi.ForeignKeyConstraint([:user_id], :user, [:id])
-    ]
+    Wasabi.primary_key(m::Type{NullableUserProfile}) = Wasabi.PrimaryKeyConstraint(Symbol[:id])
+    Wasabi.foreign_keys(m::Type{NullableUserProfile}) = [Wasabi.ForeignKeyConstraint(Symbol[:user_id], :user, Symbol[:id])]
 
-    @test Wasabi.isnullable(NullableUserProfile, :id, constraints) == false
+    @test Wasabi.isnullable(NullableUserProfile, :id) == false
 end

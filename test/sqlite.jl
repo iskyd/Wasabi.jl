@@ -39,11 +39,11 @@
 
     patch_execute_raw_query = @patch Wasabi.execute_raw_query(db::SQLite.DB, query::T, params::Vector{Any}=Any[]) where {T<:AbstractString} = query
     apply(patch_execute_raw_query) do
-        query = @pipe QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.limit(_, 1) |> QueryBuilder.offset(_, 1) |> Wasabi.execute_query(conn, _)
-        @test query == "SELECT user.id, user.name FROM user user LIMIT 1 OFFSET 1"
+        query = QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
+        @test Wasabi.execute_query(conn, query) == "SELECT user.id, user.name FROM user user LIMIT 1 OFFSET 1"
 
-        query = @pipe QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.join(_, User, UserProfile, :inner, (:id, :user_id), [:bio]) |> QueryBuilder.join(_, UserProfile, UserPhone, :inner, (:id, :user_profile_id), [:phone]) |> Wasabi.execute_query(conn, _)
-        @test query == "SELECT user.id, user.name, user_profile.bio, user_phone.phone FROM user user INNER JOIN user_profile user_profile ON user.id = user_profile.user_id INNER JOIN user_phone user_phone ON user_profile.id = user_phone.user_profile_id"
+        query = QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio]) |> QueryBuilder.join(UserProfile, UserPhone, :inner, (:id, :user_profile_id), [:phone])
+        @test Wasabi.execute_query(conn, query) == "SELECT user.id, user.name, user_profile.bio, user_phone.phone FROM user user INNER JOIN user_profile user_profile ON user.id = user_profile.user_id INNER JOIN user_phone user_phone ON user_profile.id = user_phone.user_profile_id"
     end
 
     Mocking.deactivate()
