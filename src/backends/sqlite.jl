@@ -62,8 +62,8 @@ function sqlite_constraint_to_sql(constraint::Wasabi.UniqueConstraint)::String
     return "UNIQUE ($(join(constraint.fields, ", ")))"
 end
 
-function Wasabi.execute_raw_query(db::SQLite.DB, query::T, params::Vector{Any}=Any[]) where {T<:AbstractString}
-    SQLite.DBInterface.execute(db, query, params) |> DataFrame
+function Wasabi.execute_query(db::SQLite.DB, query::RawQuery, params::Vector{Any}=Any[])
+    SQLite.DBInterface.execute(db, query.value, params) |> DataFrame
 end
 
 function Wasabi.execute_query(db::SQLite.DB, q::QueryBuilder.Query)
@@ -79,7 +79,7 @@ function Wasabi.execute_query(db::SQLite.DB, q::QueryBuilder.Query)
 
     sql_query = strip(replace("SELECT $select FROM $(Wasabi.tablename(q.source)) $(Wasabi.alias(q.source)) $joins_sql_query $groupby $orderby $limit $offset", r"(\s{2,})" => " "))
     
-    @mock Wasabi.execute_raw_query(db, sql_query)
+    @mock Wasabi.execute_query(db, RawQuery(sql_query))
 end
 
 function Wasabi.begin_transaction(db::SQLite.DB)
@@ -95,8 +95,8 @@ function Wasabi.rollback(db::SQLite.DB)
 end
 
 function Wasabi.first(db::SQLite.DB, m::Type{T}, id) where {T<:Wasabi.Model}
-    query = "SELECT * FROM $(Wasabi.tablename(m)) WHERE id = ? LIMIT 1"
-    df = Wasabi.execute_raw_query(db, query, Any[id])
+    query = RawQuery("SELECT * FROM $(Wasabi.tablename(m)) WHERE id = ? LIMIT 1")
+    df = Wasabi.execute_query(db, query, Any[id])
     if size(df, 1) == 0
         return nothing
     end
@@ -133,7 +133,7 @@ function Wasabi.delete_all!(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
 end
 
 function Wasabi.all(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
-    query = "SELECT * FROM $(Wasabi.tablename(m))"
-    df = Wasabi.execute_raw_query(db, query)
+    query = RawQuery("SELECT * FROM $(Wasabi.tablename(m))")
+    df = Wasabi.execute_query(db, query)
     return Wasabi.df2model(m, df)
 end

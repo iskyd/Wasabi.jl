@@ -50,7 +50,7 @@ catch e
     rethrow(e)
 end
 
-res = Wasabi.execute_raw_query(conn, "SELECT * FROM user where name = ?", Any["John Doe"])
+res = Wasabi.execute_query(conn, rq"SELECT * FROM user where name = ?", Any["John Doe"])
 users = Wasabi.df2model(User, res)
 
 u.name = "Jane Doe"

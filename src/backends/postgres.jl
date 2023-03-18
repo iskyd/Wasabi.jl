@@ -62,8 +62,8 @@ function postgres_constraint_to_sql(constraint::Wasabi.UniqueConstraint)::String
     return "UNIQUE ($(join(constraint.fields, ", ")))"
 end
 
-function Wasabi.execute_raw_query(conn::LibPQ.Connection, query::T, params::Vector{Any}=Any[]) where {T<:AbstractString}
-    return LibPQ.execute(conn, query, params) |> DataFrame
+function Wasabi.execute_query(conn::LibPQ.Connection, query::RawQuery, params::Vector{Any}=Any[])
+    return LibPQ.execute(conn, query.value, params) |> DataFrame
 end
 
 function Wasabi.execute_query(db::LibPQ.Connection, q::QueryBuilder.Query)
@@ -79,7 +79,7 @@ function Wasabi.execute_query(db::LibPQ.Connection, q::QueryBuilder.Query)
 
     sql_query = strip(replace("SELECT $select FROM \"$(Wasabi.tablename(q.source))\" $(Wasabi.alias(q.source)) $joins_sql_query $groupby $orderby $limit $offset", r"(\s{2,})" => " "))
 
-    @mock Wasabi.execute_raw_query(db, sql_query)
+    @mock Wasabi.execute_query(db, RawQuery(sql_query))
 end
 
 function Wasabi.begin_transaction(conn::LibPQ.Connection)
@@ -95,8 +95,8 @@ function Wasabi.rollback(conn::LibPQ.Connection)
 end
 
 function Wasabi.first(conn::LibPQ.Connection, m::Type{T}, id) where {T<:Wasabi.Model}
-    query = "SELECT * FROM \"$(Wasabi.tablename(m))\" WHERE id = \$1 LIMIT 1"
-    df = Wasabi.execute_raw_query(conn, query, Any[id])
+    query = RawQuery("SELECT * FROM \"$(Wasabi.tablename(m))\" WHERE id = \$1 LIMIT 1")
+    df = Wasabi.execute_query(conn, query, Any[id])
     if size(df, 1) == 0
         return nothing
     end
@@ -133,7 +133,7 @@ function Wasabi.delete_all!(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi
 end
 
 function Wasabi.all(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi.Model}
-    query = "SELECT * FROM \"$(Wasabi.tablename(m))\""
-    df = Wasabi.execute_raw_query(conn, query)
+    query = RawQuery("SELECT * FROM \"$(Wasabi.tablename(m))\"")
+    df = Wasabi.execute_query(conn, query)
     return Wasabi.df2model(m, df)
 end

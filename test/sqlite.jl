@@ -1,4 +1,4 @@
-@testset "postgres" begin
+@testset "sqlite" begin
     using SQLite
 
     constraints = [
@@ -37,13 +37,13 @@
         @test Wasabi.create_schema(conn, UserProfile, constraints) == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES user (id), UNIQUE (user_id))"
     end
 
-    patch_execute_raw_query = @patch Wasabi.execute_raw_query(db::SQLite.DB, query::T, params::Vector{Any}=Any[]) where {T<:AbstractString} = query
+    patch_execute_raw_query = @patch Wasabi.execute_query(db::SQLite.DB, query::Wasabi.RawQuery, params::Vector{Any}=Any[]) = query
     apply(patch_execute_raw_query) do
         query = QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
-        @test Wasabi.execute_query(conn, query) == "SELECT user.id, user.name FROM user user LIMIT 1 OFFSET 1"
+        @test Wasabi.execute_query(conn, query) == rq"SELECT user.id, user.name FROM user user LIMIT 1 OFFSET 1"
 
         query = QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio]) |> QueryBuilder.join(UserProfile, UserPhone, :inner, (:id, :user_profile_id), [:phone])
-        @test Wasabi.execute_query(conn, query) == "SELECT user.id, user.name, user_profile.bio, user_phone.phone FROM user user INNER JOIN user_profile user_profile ON user.id = user_profile.user_id INNER JOIN user_phone user_phone ON user_profile.id = user_phone.user_profile_id"
+        @test Wasabi.execute_query(conn, query) == rq"SELECT user.id, user.name, user_profile.bio, user_phone.phone FROM user user INNER JOIN user_profile user_profile ON user.id = user_profile.user_id INNER JOIN user_phone user_phone ON user_profile.id = user_phone.user_profile_id"
     end
 
     Mocking.deactivate()
@@ -54,11 +54,11 @@
     Wasabi.create_schema(conn, User)
     Wasabi.create_schema(conn, UserProfile)
 
-    query = "INSERT INTO user (id, name) VALUES (?, ?)"
-    Wasabi.execute_raw_query(conn, query, Any[1, "John Doe"])
+    query = rq"INSERT INTO user (id, name) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any[1, "John Doe"])
 
-    query = "SELECT * FROM user"
-    result = Wasabi.execute_raw_query(conn, query)
+    query = rq"SELECT * FROM user"
+    result = Wasabi.execute_query(conn, query)
     @test length(result[!, :id]) == 1
     @test result[!, :id][1] == 1
     @test result[!, :name][1] == "John Doe"
@@ -67,11 +67,11 @@
     @test user.id == 1
     @test user.name == "John Doe"
 
-    query = "INSERT INTO user (id, name) VALUES (?, ?)"
-    Wasabi.execute_raw_query(conn, query, Any[2, "Jane Doe"])
+    query = rq"INSERT INTO user (id, name) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any[2, "Jane Doe"])
 
-    query = "SELECT * FROM user"
-    result = Wasabi.execute_raw_query(conn, query)
+    query = rq"SELECT * FROM user"
+    result = Wasabi.execute_query(conn, query)
     @test length(result[!, :id]) == 2
     @test result[!, :id][1] == 1
     @test result[!, :name][1] == "John Doe"
@@ -86,21 +86,21 @@
     @test users[2].name == "Jane Doe"
 
     Wasabi.begin_transaction(conn)
-    query = "INSERT INTO user (id, name) VALUES (?, ?)"
-    Wasabi.execute_raw_query(conn, query, Any[3, "John Doe"])
+    query = rq"INSERT INTO user (id, name) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any[3, "John Doe"])
     Wasabi.rollback(conn)
 
-    query = "SELECT * FROM user"
-    result = Wasabi.execute_raw_query(conn, query)
+    query = rq"SELECT * FROM user"
+    result = Wasabi.execute_query(conn, query)
     @test length(result[!, :id]) == 2
 
     Wasabi.begin_transaction(conn)
-    query = "INSERT INTO user (id, name) VALUES (?, ?)"
-    Wasabi.execute_raw_query(conn, query, Any[3, "John Doe"])
+    query = rq"INSERT INTO user (id, name) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any[3, "John Doe"])
     Wasabi.commit!(conn)
 
-    query = "SELECT * FROM user"
-    result = Wasabi.execute_raw_query(conn, query)
+    query = rq"SELECT * FROM user"
+    result = Wasabi.execute_query(conn, query)
     @test length(result[!, :id]) == 3
 
     user = Wasabi.first(conn, User, 1)
