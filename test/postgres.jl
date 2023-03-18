@@ -45,7 +45,7 @@
         @test Wasabi.create_schema(conn, UserProfile, constraints) == "CREATE TABLE IF NOT EXISTS \"user_profile\" (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES \"user\" (id), UNIQUE (user_id))"
     end
 
-    patch_execute_raw_query = @patch Wasabi.execute_query(conn::LibPQ.Connection, query::RawQuery, params::Vector{Any}=Any[]) = query
+    patch_execute_raw_query = @patch Wasabi.execute_query(conn::LibPQ.Connection, query::Wasabi.RawQuery, params::Vector{Any}=Any[]) = query
     apply(patch_execute_raw_query) do
         query = QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
         @test Wasabi.execute_query(conn, query) == rq"SELECT user.id, user.name FROM \"user\" user LIMIT 1 OFFSET 1"
