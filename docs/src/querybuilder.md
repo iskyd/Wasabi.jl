@@ -7,7 +7,6 @@ CurrentModule = Wasabi.QueryBuilder
 You can use QueryBuilder to create and execute a query in a simple and fast way.
 ```
 using Wasabi
-using Pipe
 
 mutable struct User <: Wasabi.Model
     id::Int
@@ -17,7 +16,8 @@ end
 configuration = Wasabi.SQLiteConnectionConfiguration("test.db")
 conn = Wasabi.connect(configuration)
 
-users = @pipe QueryBuilder.select(User) |> QueryBuilder.limit(_, 1) |> Wasabi.execute_query(conn, _) |> Wasabi.df2model(User, _)
+query = QueryBuilder.select(User) |> QueryBuilder.limit(1)
+users = Wasabi.df2model(User, Wasabi.execute_query(conn, user))
 ```
 
 ```@index
