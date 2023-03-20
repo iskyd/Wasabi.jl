@@ -62,7 +62,7 @@
     Wasabi.create_schema(conn, User)
     Wasabi.create_schema(conn, UserProfile)
 
-    query = rq"INSERT INTO \"user\" (id, name) VALUES (\$1, \$2)"
+    query = rq"INSERT INTO \"user\" (id, name) VALUES ($1, $2)"
     Wasabi.execute_query(conn, query, Any[1, "John Doe"])
 
     query = rq"SELECT * FROM \"user\""
@@ -76,7 +76,7 @@
     @test user.id == 1
     @test user.name == "John Doe"
 
-    query = rq"INSERT INTO \"user\" (id, name) VALUES (\$1, \$2)"
+    query = rq"INSERT INTO \"user\" (id, name) VALUES ($1, $2)"
     Wasabi.execute_query(conn, query, Any[2, "Jane Doe"])
 
     query = rq"SELECT * FROM \"user\""
@@ -95,7 +95,7 @@
     @test users[2].name == "Jane Doe"
 
     Wasabi.begin_transaction(conn)
-    query = rq"INSERT INTO \"user\" (id, name) VALUES (\$1, \$2)"
+    query = rq"INSERT INTO \"user\" (id, name) VALUES ($1, $2)"
     Wasabi.execute_query(conn, query, Any[3, "John Doe"])
     Wasabi.rollback(conn)
 
@@ -104,7 +104,7 @@
     @test length(result[!, :id]) == 2
 
     Wasabi.begin_transaction(conn)
-    query = rq"INSERT INTO \"user\" (id, name) VALUES (\$1, \$2)"
+    query = rq"INSERT INTO \"user\" (id, name) VALUES ($1, $2)"
     Wasabi.execute_query(conn, query, Any[3, "John Doe"])
     Wasabi.commit!(conn)
 
