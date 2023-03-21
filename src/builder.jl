@@ -2,6 +2,31 @@ module QueryBuilder
 
 using Wasabi
 
+REL_MAPPING = Dict(
+    :eq => "=",
+    :neq => "<>",
+    :lt => "<",
+    :lte => "<=",
+    :gt => ">",
+    :gte => ">=",
+    :in => "IN",
+    :notin => "NOT IN",
+    :like => "LIKE",
+    :notlike => "NOT LIKE",
+    :ilike => "ILIKE",
+    :notilike => "NOT ILIKE",
+    :is => "IS",
+    :isnot => "IS NOT",
+    :between => "BETWEEN",
+    :notbetween => "NOT BETWEEN",
+    :overlap => "&&",
+    :contains => "@>",
+    :containedby => "<@",
+    :any => "ANY",
+    :all => "ALL",
+    :some => "SOME"
+)
+
 """
     Join{T<:Wasabi.Model}
     Represents a join for the given model.
@@ -106,17 +131,23 @@ function where(expr::Expr)
     end
 end
 
-function build_where_expr(e::Expr; top=true)
+function build_where_expr(e::Expr, params::Vector{Any}; top=true)
     args = e.args
     if args[1] == :and || args[1] == :or
-        return (top == true ? "WHERE " : "") * "(" * Base.join(map(x -> build_where_expr(x, top=false), args[2:end]), " $(string(args[1])) ") * ")"
+        return (top == true ? "WHERE " : "") * "(" * Base.join(map(x -> build_where_expr(x, params, top=false), args[2:end]), " $(uppercase(string(args[1]))) ") * ")"
     else
         model, field, rel, value = args
-        return "$(Wasabi.alias(eval(model))).$(string(field)) $(string(rel)) $(string(value))"
+        push!(params, eval(value))
+        return "$(Wasabi.alias(string(model))).$(string(field)) $(REL_MAPPING[rel]) \$$(length(params))"
     end
 end
 
+"""
+    build(q::Query)::Tuple{RawQuery, Vector{Any}}
+    Builds the query and returns a tuple of the query string and the parameters.
+"""
 function build(q::Query)
+    params = Any[]
     select = Base.join(vcat(
         map(field -> "$(Wasabi.alias(q.source)).$(String(field))", q.select), 
         [Base.join(map(field -> "$(Wasabi.alias(join_query.target)).$(String(field))", join_query.select), ", ") for join_query in q.joins]), ", "
@@ -126,11 +157,11 @@ function build(q::Query)
     limit = q.limit === nothing ? "" : " LIMIT " * string(q.limit)
     offset = q.offset === nothing ? "" : " OFFSET " * string(q.offset)
     joins = Base.join(map(join_query -> " $(uppercase(string(join_query.type))) JOIN \"$(Wasabi.tablename(join_query.target))\" $(Wasabi.alias(join_query.target)) ON $(Wasabi.alias(join_query.source)).$(join_query.on[1]) = $(Wasabi.alias(join_query.target)).$(join_query.on[2])", q.joins), " ")
-    q_where = q.where === nothing ? "" : build_where_expr(q.where)
+    q_where = q.where === nothing ? "" : build_where_expr(q.where, params)
     
     sql_query = strip(replace("SELECT $select FROM \"$(Wasabi.tablename(q.source))\" $(Wasabi.alias(q.source)) $joins $q_where $groupby $orderby $limit $offset", r"(\s{2,})" => " "))
 
-    return Wasabi.RawQuery(sql_query)
+    return Wasabi.RawQuery(sql_query), params
 end
 
 end

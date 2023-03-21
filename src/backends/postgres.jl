@@ -61,7 +61,7 @@ function Wasabi.execute_query(conn::LibPQ.Connection, query::RawQuery, params::V
 end
 
 function Wasabi.execute_query(db::LibPQ.Connection, q::QueryBuilder.Query)
-    @mock Wasabi.execute_query(db, QueryBuilder.build(q))
+    @mock Wasabi.execute_query(db, QueryBuilder.build(q)...)
 end
 
 function Wasabi.begin_transaction(conn::LibPQ.Connection)

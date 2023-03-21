@@ -61,7 +61,7 @@ function Wasabi.execute_query(db::SQLite.DB, query::RawQuery, params::Vector{Any
 end
 
 function Wasabi.execute_query(db::SQLite.DB, q::QueryBuilder.Query)
-    @mock Wasabi.execute_query(db, QueryBuilder.build(q))
+    @mock Wasabi.execute_query(db, QueryBuilder.build(q)...)
 end
 
 function Wasabi.begin_transaction(db::SQLite.DB)

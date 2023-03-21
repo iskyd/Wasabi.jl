@@ -25,12 +25,27 @@ end
 tablename(m::Type{T}) where {T<:Model} = join("_$word" for word in lowercase.(split(String(Base.typename(m).name), r"(?=[A-Z])")))[2:end]
 
 """
+    tablename(m::String)
+    Returns the name of the table for the given model.
+"""
+tablename(m::String) = join("_$word" for word in lowercase.(split(m, r"(?=[A-Z])")))[2:end]
+
+"""
     alias(m::Type{T}) where {T <: Model}
     Returns the alias of the table for the given model.
 """
 alias(m::Type{T}) where {T<:Model} = Wasabi.tablename(m)
 
+"""
+    alias(m::String)
+    Returns the alias of the table for the given model.
+"""
+alias(m::String) = Wasabi.tablename(m)
 
+
+function test_fn()
+    println(eval(:User))
+end
 """
     colnames(m::Type{T}) where {T <: Model}
     Returns the names of the columns for the given model.
