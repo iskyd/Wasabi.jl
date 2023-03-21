@@ -8,13 +8,11 @@ struct Migration <: Wasabi.Model
     version::String
 end
 
+Wasabi.unique_constraints(m::Type{Migration}) = [Wasabi.UniqueConstraint(Symbol[:version])]
+
 struct MigrationFileNotFound <: Exception
     path::String
 end
-
-constraints = [
-    Wasabi.UniqueConstraint([:version])
-]
 
 """
     get_versions(path::String)::Vector{Tuple{String,Dates.DateTime}}
@@ -164,10 +162,7 @@ function init(path::String)::String
     down_version = nothing
 
     function up(db::Any)
-        constraints = [
-            Wasabi.UniqueConstraint([:version])
-        ]
-        Wasabi.create_schema(db, Migrations.Migration, constraints)
+        Wasabi.create_schema(db, Migrations.Migration)
     end
 
     function down(db::Any)

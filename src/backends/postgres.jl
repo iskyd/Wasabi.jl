@@ -30,10 +30,11 @@ function Wasabi.delete_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasa
     @mock LibPQ.execute(conn, query)
 end
 
-function Wasabi.create_schema(conn::LibPQ.Connection, m::Type{T}, constraints::Vector{S}=Wasabi.ModelConstraint[]) where {T<:Wasabi.Model,S<:Wasabi.ModelConstraint}
+function Wasabi.create_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi.Model}
     columns = [(col, coltype(POSTGRES_MAPPING_TYPES, m, col)) for col in Wasabi.colnames(m)]
     query = "CREATE TABLE IF NOT EXISTS \"$(Wasabi.tablename(m))\" ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1]) ? "" : " NOT NULL") for col in columns], ", "))"
 
+    constraints = Wasabi.constraints(m)
     for constraint in constraints
         query = query * ", " * postgres_constraint_to_sql(constraint)
     end

@@ -89,6 +89,12 @@ function coltype(mapping::Dict{Type,String}, m::Type{T}, col::Symbol)::String wh
 end
 
 """
+    constraints(m::Type{T}) where {T <: Model}
+    Returns the constraints for the given model.
+"""
+constraints(m::Type{T}) where {T<:Model} = filter(c -> c !== nothing, [Wasabi.primary_key(m), Wasabi.foreign_keys(m)..., Wasabi.unique_constraints(m)...])
+
+"""
     connect(config::ConnectionConfiguration)
     Connects to the database using the given configuration.
 """
@@ -101,7 +107,7 @@ function connect end
 function disconnect end
 
 """
-    create_schema(db::Any, m::Type{T}, constraints::Vector{ModelConstraint}) where {T <: Model}
+    create_schema(db::Any, m::Type{T}) where {T <: Model}
     Creates the schema for the given model and constraints.
 """
 function create_schema end

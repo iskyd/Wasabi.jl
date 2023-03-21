@@ -10,11 +10,6 @@
     )
     conn = Wasabi.connect(configuration)
 
-    constraints = [
-        Wasabi.PrimaryKeyConstraint([:id]),
-        Wasabi.UniqueConstraint([:id])
-    ]
-
     Mocking.activate()
 
     patch = @patch LibPQ.execute(conn::LibPQ.Connection, query::String) = query
@@ -22,27 +17,11 @@
     apply(patch) do
         @test Wasabi.delete_schema(conn, UserProfile) == "DROP TABLE IF EXISTS \"user_profile\""
         @test Wasabi.delete_schema(conn, User) == "DROP TABLE IF EXISTS \"user\""
-        @test Wasabi.create_schema(conn, User) == "CREATE TABLE IF NOT EXISTS \"user\" (id INTEGER NOT NULL, name TEXT NOT NULL)"
-        @test Wasabi.create_schema(conn, User, constraints) == "CREATE TABLE IF NOT EXISTS \"user\" (id INTEGER NOT NULL, name TEXT NOT NULL, PRIMARY KEY (id), UNIQUE (id))"
+        @test Wasabi.create_schema(conn, User) == "CREATE TABLE IF NOT EXISTS \"user\" (id INTEGER NOT NULL, name TEXT NOT NULL, PRIMARY KEY (id))"
     end
 
-    constraints = [
-        Wasabi.PrimaryKeyConstraint([:id]),
-        Wasabi.ForeignKeyConstraint([:id], :user, [:id])
-    ]
-
     apply(patch) do
-        @test Wasabi.create_schema(conn, UserProfile, constraints) == "CREATE TABLE IF NOT EXISTS \"user_profile\" (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (id) REFERENCES \"user\" (id))"
-    end
-
-    constraints = [
-        Wasabi.PrimaryKeyConstraint([:id]),
-        Wasabi.ForeignKeyConstraint([:user_id], :user, [:id]),
-        Wasabi.UniqueConstraint([:user_id])
-    ]
-
-    apply(patch) do
-        @test Wasabi.create_schema(conn, UserProfile, constraints) == "CREATE TABLE IF NOT EXISTS \"user_profile\" (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES \"user\" (id), UNIQUE (user_id))"
+        @test Wasabi.create_schema(conn, UserProfile) == "CREATE TABLE IF NOT EXISTS \"user_profile\" (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES \"user\" (id), UNIQUE (user_id))"
     end
 
     patch_execute_raw_query = @patch Wasabi.execute_query(conn::LibPQ.Connection, query::Wasabi.RawQuery, params::Vector{Any}=Any[]) = query
