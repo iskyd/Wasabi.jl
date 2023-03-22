@@ -21,13 +21,23 @@ users = Wasabi.df2model(User, Wasabi.execute_query(conn, user))
 ```
 
 QueryBuilder supports select, join, where, limit, offset, group by and order by.
-Where conditions are expressed as Julia Expr object.
+
+Join are expressed using source, target, type (inner, outer ...), on, select.
+Here's an example to join User with UserProfile using an INNER JOIN and selecting the "bio" column from UserProfile 
+```
+query = QueryBuilder.select(User) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio])
+
+# SELECT user.id, user.name, user_profile.bio FROM "user" user INNER JOIN "user_profile" user_profile ON user.id = user_profile.user_id
+```
+
+Where conditions are expressed as Julia Expr object where you can nest and/or conditions. The condition needs to be expressed as (Model, fieldname, function, params).
 
 ```
 query = QueryBuilder.select(User) |> QueryBuilder.where(:(or, (User, name, like, "%mattia%"), (User, id, in, [1, 2, 3]))) |> QueryBuilder.limit(1)
 sql, params = QueryBuilder.build(query)
-println(sql.value) # SELECT user.id, user.name FROM "user" user WHERE (user.name LIKE $1 OR user.id IN $2) LIMIT 1
-println(params) # 2-element Vector{Any}: "%mattia%" [1, 2, 3]
+
+# println(sql.value) SELECT user.id, user.name FROM "user" user WHERE (user.name LIKE $1 OR user.id IN $2) LIMIT 1
+# println(params) # 2-element Vector{Any}: "%mattia%" [1, 2, 3]
 ```
 
 ```@index
