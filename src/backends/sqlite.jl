@@ -77,7 +77,7 @@ function Wasabi.rollback(db::SQLite.DB)
 end
 
 function Wasabi.first(db::SQLite.DB, m::Type{T}, id) where {T<:Wasabi.Model}
-    query = RawQuery("SELECT * FROM $(Wasabi.tablename(m)) WHERE id = ? LIMIT 1")
+    query = RawQuery("SELECT * FROM $(Wasabi.tablename(m)) WHERE id = \$1 LIMIT 1")
     df = Wasabi.execute_query(db, query, Any[id])
     if size(df, 1) == 0
         return nothing

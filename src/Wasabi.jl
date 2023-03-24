@@ -34,13 +34,13 @@ tablename(m::String) = join("_$word" for word in lowercase.(split(m, r"(?=[A-Z])
     alias(m::Type{T}) where {T <: Model}
     Returns the alias of the table for the given model.
 """
-alias(m::Type{T}) where {T<:Model} = Wasabi.tablename(m)
+alias(m::Type{T}) where {T<:Model} = Wasabi.tablename(m) * "_alias"
 
 """
     alias(m::String)
     Returns the alias of the table for the given model.
 """
-alias(m::String) = Wasabi.tablename(m)
+alias(m::String) = Wasabi.tablename(m) * "_alias"
 
 
 function test_fn()

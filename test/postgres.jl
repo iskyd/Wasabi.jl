@@ -27,10 +27,10 @@
     patch_execute_raw_query = @patch Wasabi.execute_query(conn::LibPQ.Connection, query::Wasabi.RawQuery, params::Vector{Any}=Any[]) = query
     apply(patch_execute_raw_query) do
         query = QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
-        @test Wasabi.execute_query(conn, query) == rq"SELECT user.id, user.name FROM \"user\" user LIMIT 1 OFFSET 1"
+        @test Wasabi.execute_query(conn, query) == rq"SELECT user_alias.id, user_alias.name FROM \"user\" user_alias LIMIT 1 OFFSET 1"
         
         query = QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio]) |> QueryBuilder.join(UserProfile, UserPhone, :inner, (:id, :user_profile_id), [:phone])
-        @test Wasabi.execute_query(conn, query) == rq"SELECT user.id, user.name, user_profile.bio, user_phone.phone FROM \"user\" user INNER JOIN \"user_profile\" user_profile ON user.id = user_profile.user_id INNER JOIN \"user_phone\" user_phone ON user_profile.id = user_phone.user_profile_id"
+        @test Wasabi.execute_query(conn, query) == rq"SELECT user_alias.id, user_alias.name, user_profile_alias.bio, user_phone_alias.phone FROM \"user\" user_alias INNER JOIN \"user_profile\" user_profile_alias ON user_alias.id = user_profile_alias.user_id INNER JOIN \"user_phone\" user_phone_alias ON user_profile_alias.id = user_phone_alias.user_profile_id"
     end
 
     Mocking.deactivate()
@@ -122,6 +122,17 @@
 
     users = Wasabi.all(conn, User)
     @test length(users) == 3
+
+    qb = QueryBuilder.select(User) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
+    users = Wasabi.execute_query(conn, qb)
+    @test length(users[!, :id]) == 1
+    user = Wasabi.df2model(User, users)[1]
+    @test user.id == 2
+    @test user.name == "Jane Doe"
+
+    qb = QueryBuilder.select(User) |> QueryBuilder.where(:(and, (User, name, like, "%John%")))
+    users = Wasabi.execute_query(conn, qb)
+    @test length(users[!, :id]) == 2
 
     Wasabi.delete_all!(conn, User)
     @test length(Wasabi.all(conn, User)) == 0
