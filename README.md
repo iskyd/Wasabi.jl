@@ -18,27 +18,22 @@ mutable struct User <: Wasabi.Model
     name::String
 end
 
+Wasabi.primary_key(m::Type{User}) = Wasabi.PrimaryKeyConstraint(Symbol[:id])
+
 struct UserProfile <: Wasabi.Model
     id::Int
     user_id::Int
     bio::Union{String,Nothing}
 end
 
-user_constraints = [
-    Wasabi.PrimaryKeyConstraint([:id])
-]
-
-user_profile_constraints = [
-    Wasabi.PrimaryKeyConstraint([:id]),
-    Wasabi.ForeignKeyConstraint([:user_id], :user, [:id]),
-    Wasabi.UniqueConstraint([:user_id])
-]
+Wasabi.primary_key(m::Type{UserProfile}) = Wasabi.PrimaryKeyConstraint(Symbol[:id])
+Wasabi.foreign_keys(m::Type{UserProfile}) = [Wasabi.ForeignKeyConstraint(Symbol[:user_id], :user, Symbol[:id])]
 
 configuration = Wasabi.SQLiteConnectionConfiguration("test.db")
 conn = Wasabi.connect(configuration)
 
-Wasabi.create_schema(conn, User, user_constraints)
-Wasabi.create_schema(conn, UserProfile, user_profile_constraints)
+Wasabi.create_schema(conn, User)
+Wasabi.create_schema(conn, UserProfile)
 
 user = User(1, "John Doe")
 Wasabi.insert!(conn, user)
@@ -61,6 +56,9 @@ u.name = "Jane Doe"
 Wasabi.update!(conn, user)
 
 Wasabi.delete!(conn, user)
+
+qb = QueryBuilder.select(User) |> QueryBuilder.where(:(and, (User, name, like, "%John%"))) |> QueryBuilder.limit(1)
+users = Wasabi.execute_query(conn, qb)
 
 Wasabi.disconnect(conn)
 ```
