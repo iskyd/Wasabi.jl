@@ -57,7 +57,7 @@ Wasabi.update!(conn, user)
 
 Wasabi.delete!(conn, user)
 
-qb = QueryBuilder.select(User) |> QueryBuilder.where(:(and, (User, name, like, "%John%"))) |> QueryBuilder.limit(1)
+qb = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.where(:(and, (User, name, like, "%John%"))) |> QueryBuilder.limit(1)
 users = Wasabi.execute_query(conn, qb)
 
 Wasabi.disconnect(conn)
