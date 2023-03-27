@@ -97,9 +97,9 @@ end
     select(select::Vector{SelectExpr})
     Sets the selected columns for the given query.
 """
-function select(select::Vector{SelectExpr})
+function select(source::Type{T}, field::Symbol, fn::Union{Symbol, Nothing} = nothing) where {T<:Wasabi.Model}
     return function (q::Query)
-        q.select = vcat(q.select, select)
+        push!(q.select, SelectExpr(source=source, field=field, fn=fn))
         q
     end
 end

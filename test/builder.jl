@@ -53,4 +53,8 @@
     sql, params = QueryBuilder.build(query)
     @test sql.value == "SELECT user_alias.id, user_alias.name, user_profile_alias.bio FROM \"user\" user_alias INNER JOIN \"user_profile\" user_profile_alias ON user_alias.id = user_profile_alias.user_id WHERE (user_alias.id IN \$1 OR user_profile_alias.bio = \$2)"
     @test params == [[1, 2, 3], "I'm a developer"]
+
+    query = QueryBuilder.from(User) |> QueryBuilder.select(User, :id, :count)
+    sql, params = QueryBuilder.build(query)
+    @test sql.value == "SELECT COUNT(user_alias.id) FROM \"user\" user_alias"
 end
