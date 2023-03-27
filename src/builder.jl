@@ -45,7 +45,7 @@ end
 """
 Base.@kwdef mutable struct Query{T<:Wasabi.Model}
     source::Type{T}
-    select::Vector{Symbol}
+    select::Vector{Symbol} = Symbol[]
     groupby::Vector{Symbol} = Symbol[]
     orderby::Vector{Symbol} = Symbol[]
     limit::Union{Nothing,Int} = nothing
@@ -55,14 +55,26 @@ Base.@kwdef mutable struct Query{T<:Wasabi.Model}
 end
 
 """
-    select(source::Type{T}, select::Union{Vector{Symbol}, Nothing} = nothing)::Query where {T <: Model}
-    Creates a new query for the given model and selected columns. If no columns are specified, all columns are selected.
+    from(source::Type{T})::Query where {T <: Model}
+    Creates a new query for the given model.
 """
-function select(source::Type{T}, select::Union{Vector{Symbol},Nothing}=nothing) where {T<:Wasabi.Model}
-    if select === nothing
-        select = Wasabi.colnames(source)
+function from(source::Type{T}) where {T<:Wasabi.Model}
+    return Query(source=source)
+end
+
+"""
+    select(select::Union{Vector{Symbol}, Nothing} = nothing)
+    Sets the selected columns for the given query. If no columns are specified, all columns are selected.
+"""
+function select(select::Union{Vector{Symbol}, Nothing}=nothing)
+    return function(q::Query)
+        if select === nothing
+            q.select = Wasabi.colnames(q.source)
+        else
+            q.select = select
+        end
+        q
     end
-    Query(source=source, select=select)
 end
 
 """

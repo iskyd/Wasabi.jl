@@ -19,10 +19,10 @@
 
     patch_execute_raw_query = @patch Wasabi.execute_query(db::SQLite.DB, query::Wasabi.RawQuery, params::Vector{Any}=Any[]) = query
     apply(patch_execute_raw_query) do
-        query = QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
+        query = QueryBuilder.from(User) |> QueryBuilder.select([:id, :name]) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
         @test Wasabi.execute_query(conn, query) == rq"SELECT user_alias.id, user_alias.name FROM \"user\" user_alias LIMIT 1 OFFSET 1"
 
-        query = QueryBuilder.select(User, [:id, :name]) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio]) |> QueryBuilder.join(UserProfile, UserPhone, :inner, (:id, :user_profile_id), [:phone])
+        query = QueryBuilder.from(User) |> QueryBuilder.select([:id, :name]) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio]) |> QueryBuilder.join(UserProfile, UserPhone, :inner, (:id, :user_profile_id), [:phone])
         @test Wasabi.execute_query(conn, query) == rq"SELECT user_alias.id, user_alias.name, user_profile_alias.bio, user_phone_alias.phone FROM \"user\" user_alias INNER JOIN \"user_profile\" user_profile_alias ON user_alias.id = user_profile_alias.user_id INNER JOIN \"user_phone\" user_phone_alias ON user_profile_alias.id = user_phone_alias.user_profile_id"
     end
 
@@ -112,14 +112,14 @@
     users = Wasabi.all(conn, User)
     @test length(users) == 3
 
-    qb = QueryBuilder.select(User) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
+    qb = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
     users = Wasabi.execute_query(conn, qb)
     @test length(users[!, :id]) == 1
     user = Wasabi.df2model(User, users)[1]
     @test user.id == 2
     @test user.name == "Jane Doe"
 
-    qb = QueryBuilder.select(User) |> QueryBuilder.where(:(and, (User, name, like, "%John%")))
+    qb = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.where(:(and, (User, name, like, "%John%")))
     users = Wasabi.execute_query(conn, qb)
     @test length(users[!, :id]) == 2
 
