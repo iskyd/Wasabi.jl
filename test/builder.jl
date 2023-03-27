@@ -1,31 +1,30 @@
 @testset "query builder" begin
     query = QueryBuilder.from(User) |> QueryBuilder.select()
     @test query.source == User
-    @test query.select == Symbol[:id, :name]
+    @test query.select == [QueryBuilder.SelectExpr(User, :id, nothing), QueryBuilder.SelectExpr(User, :name, nothing)]
     sql, params = QueryBuilder.build(query)
     @test sql.value  == "SELECT user_alias.id, user_alias.name FROM \"user\" user_alias"
     @test params == Any[]
 
     query = QueryBuilder.from(User) |> QueryBuilder.select(Symbol[:id]) |> QueryBuilder.limit(10) |> QueryBuilder.offset(5) |> QueryBuilder.orderby(Symbol[:name])
     @test query.source == User
-    @test query.select == Symbol[:id]
+    @test query.select == [QueryBuilder.SelectExpr(User, :id, nothing)]
     @test query.limit == 10
     @test query.offset == 5
     @test query.orderby == Symbol[:name]
 
     query = QueryBuilder.from(User) |> QueryBuilder.select([:name]) |> QueryBuilder.groupby(Symbol[:name])
     @test query.source == User
-    @test query.select == Symbol[:name]
+    @test query.select == [QueryBuilder.SelectExpr(User, :name, nothing)]
     @test query.groupby == Symbol[:name]
 
     query = QueryBuilder.from(User) |> QueryBuilder.select([:name]) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio])
     @test query.source == User
-    @test query.select == Symbol[:name]
+    @test query.select == [QueryBuilder.SelectExpr(User, :name, nothing), QueryBuilder.SelectExpr(UserProfile, :bio, nothing)]
     @test query.joins[1].source == User
     @test query.joins[1].target == UserProfile
     @test query.joins[1].type == :inner
     @test query.joins[1].on == (:id, :user_id)
-    @test query.joins[1].select == Symbol[:bio]
 
     e = :(or, (User, id, in, [1, 2, 3]), (User, id, in, [7, 8, 9]))
     params = Any[]

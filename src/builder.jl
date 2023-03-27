@@ -27,16 +27,33 @@ REL_MAPPING = Dict(
     :some => "SOME"
 )
 
+FN_MAPPING = Dict(
+    :count => "COUNT",
+    :sum => "SUM",
+    :avg => "AVG",
+    :min => "MIN",
+    :max => "MAX"
+)
+
 """
     Join{T<:Wasabi.Model}
     Represents a join for the given model.
 """
-Base.@kwdef struct Join{T<:Wasabi.Model, S<:Wasabi.Model}
+Base.@kwdef struct Join{T<:Wasabi.Model,S<:Wasabi.Model}
     source::Type{T}
     target::Type{S}
     type::Symbol
     on::Tuple{Symbol,Symbol}
-    select::Vector{Symbol}
+end
+
+"""
+    SelectExpr{T<:Wasabi.Model}
+    Represents a select expression for the given model.
+"""
+Base.@kwdef struct SelectExpr{T<:Wasabi.Model}
+    source::Type{T}
+    field::Symbol
+    fn::Union{Symbol,Nothing} = nothing
 end
 
 """
@@ -45,13 +62,13 @@ end
 """
 Base.@kwdef mutable struct Query{T<:Wasabi.Model}
     source::Type{T}
-    select::Vector{Symbol} = Symbol[]
+    select::Vector{SelectExpr} = SelectExpr[]
     groupby::Vector{Symbol} = Symbol[]
     orderby::Vector{Symbol} = Symbol[]
     limit::Union{Nothing,Int} = nothing
     offset::Union{Nothing,Int} = nothing
     joins::Vector{Join} = Join[]
-    where::Union{Expr, Nothing} = nothing
+    where::Union{Expr,Nothing} = nothing
 end
 
 """
@@ -66,13 +83,34 @@ end
     select(select::Union{Vector{Symbol}, Nothing} = nothing)
     Sets the selected columns for the given query. If no columns are specified, all columns are selected.
 """
-function select(select::Union{Vector{Symbol}, Nothing}=nothing)
-    return function(q::Query)
+function select(select::Union{Vector{Symbol},Nothing}=nothing)
+    return function (q::Query)
         if select === nothing
-            q.select = Wasabi.colnames(q.source)
-        else
-            q.select = select
+            select = Wasabi.colnames(q.source)
         end
+        q.select = vcat(q.select, [SelectExpr(source=q.source, field=col) for col in select])
+        q
+    end
+end
+
+"""
+    select(select::Vector{SelectExpr})
+    Sets the selected columns for the given query.
+"""
+function select(select::Vector{SelectExpr})
+    return function (q::Query)
+        q.select = vcat(q.select, select)
+        q
+    end
+end
+
+"""
+    select(source::Type{T}, select::Vector{Symbol})
+    Sets the selected columns for the given query.
+"""
+function select(source::Type{T}, select::Vector{Symbol}) where {T<:Wasabi.Model}
+    return function (q::Query)
+        q.select = vcat(q.select, [SelectExpr(source=source, field=col) for col in select])
         q
     end
 end
@@ -82,7 +120,7 @@ end
     Sets the limit for the given query.
 """
 function limit(limit::Int)
-    return function(q::Query)
+    return function (q::Query)
         q.limit = limit
         q
     end
@@ -93,7 +131,7 @@ end
     Sets the offset for the given query.
 """
 function offset(offset::Int)
-    return function(q::Query)
+    return function (q::Query)
         q.offset = offset
         q
     end
@@ -104,7 +142,7 @@ end
     Sets the order by clause for the given query.
 """
 function orderby(orderby::Vector{Symbol})
-    return function(q::Query)
+    return function (q::Query)
         q.orderby = orderby
         q
     end
@@ -115,19 +153,20 @@ end
     Sets the group by clause for the given query.
 """
 function groupby(groupby::Vector{Symbol})
-    return function(q::Query)
+    return function (q::Query)
         q.groupby = groupby
         q
     end
 end
 
 """
-    join(m::Type{T}, type::Symbol, on::Tuple{Symbol, Symbol}, select::Vector{Symbol} = Symbol[]) where {T <: Model}
+    join(m::Type{T}, type::Symbol, on::Tuple{Symbol, Symbol}, select_fields::Vector{Symbol} = Symbol[]) where {T <: Model}
     Joins the given model to the query.
 """
-function join(source::Type{T}, target::Type{S}, type::Symbol, on::Tuple{Symbol,Symbol}, select::Vector{Symbol}=Symbol[]) where {T<:Wasabi.Model, S<:Wasabi.Model}
-    return function(q::Query)
-        push!(q.joins, Join(source=source, target=target, type=type, on=on, select=select))
+function join(source::Type{T}, target::Type{S}, type::Symbol, on::Tuple{Symbol,Symbol}, select_fields::Vector{Symbol}=Symbol[]) where {T<:Wasabi.Model,S<:Wasabi.Model}
+    return function (q::Query)
+        push!(q.joins, Join(source=source, target=target, type=type, on=on))
+        q = q |> select(target, select_fields)
         q
     end
 end
@@ -137,7 +176,7 @@ end
     Sets the where clause for the given query.
 """
 function where(expr::Expr)
-    return function(q::Query)
+    return function (q::Query)
         q.where = expr
         q
     end
@@ -154,23 +193,28 @@ function build_where_expr(e::Expr, params::Vector{Any}; top=true)
     end
 end
 
+function build_select_expr(s::SelectExpr)
+    if s.fn === nothing
+        return "$(Wasabi.alias(s.source)).$(String(s.field))"
+    else
+        return "$(FN_MAPPING[s.fn])($(Wasabi.alias(s.source)).$(String(s.field)))"
+    end
+end
+
 """
     build(q::Query)::Tuple{RawQuery, Vector{Any}}
     Builds the query and returns a tuple of the query string and the parameters.
 """
 function build(q::Query)
     params = Any[]
-    select = Base.join(vcat(
-        map(field -> "$(Wasabi.alias(q.source)).$(String(field))", q.select), 
-        [Base.join(map(field -> "$(Wasabi.alias(join_query.target)).$(String(field))", join_query.select), ", ") for join_query in q.joins]), ", "
-    )
+    select = Base.join(map(s -> build_select_expr(s), q.select), ", ")
     groupby = isempty(q.groupby) ? "" : " GROUP BY " * Base.join(q.groupby, ", ")
     orderby = isempty(q.orderby) ? "" : " ORDER BY " * Base.join(q.orderby, ", ")
     limit = q.limit === nothing ? "" : " LIMIT " * string(q.limit)
     offset = q.offset === nothing ? "" : " OFFSET " * string(q.offset)
     joins = Base.join(map(join_query -> " $(uppercase(string(join_query.type))) JOIN \"$(Wasabi.tablename(join_query.target))\" $(Wasabi.alias(join_query.target)) ON $(Wasabi.alias(join_query.source)).$(join_query.on[1]) = $(Wasabi.alias(join_query.target)).$(join_query.on[2])", q.joins), " ")
     q_where = q.where === nothing ? "" : build_where_expr(q.where, params)
-    
+
     sql_query = strip(replace("SELECT $select FROM \"$(Wasabi.tablename(q.source))\" $(Wasabi.alias(q.source)) $joins $q_where $groupby $orderby $limit $offset", r"(\s{2,})" => " "))
 
     return Wasabi.RawQuery(sql_query), params
