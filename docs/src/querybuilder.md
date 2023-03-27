@@ -22,9 +22,17 @@ users = Wasabi.df2model(User, Wasabi.execute_query(conn, user))
 
 QueryBuilder supports select, join, where, limit, offset, group by and order by.
 
+Select can be expressed as vector of symbols or using SelectExpr object. If no arguments are passed to select then all fields of the model are selected. You can also use alias and select function like count, sum, avg and so on.
+
+```
+QueryBuilder.from(User) |> QueryBuilder.select() # Select all fields from user model
+QueryBuilder.from(User) |> QueryBuilder.select([:id, :name]) # SELECT user_alias.id, user_alias.name FROM user user_alias
+QueryBuilder.from(User) |> QueryBuilder.select(User, :id, :total, :count) # SELECT COUNT(user_alias.id) AS total FROM user user_alias
+```
+
 Join are expressed using source, target, type (inner, outer ...), on, select.
 Here's an example to join User with UserProfile using an INNER JOIN and selecting the "bio" column from UserProfile .
-If no arguments are passed to select then all fields of the model are selected.
+
 
 ```
 query = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio])

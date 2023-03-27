@@ -28,7 +28,7 @@
     apply(patch_execute_raw_query) do
         query = QueryBuilder.from(User) |> QueryBuilder.select([:id, :name]) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
         @test Wasabi.execute_query(conn, query) == rq"SELECT user_alias.id, user_alias.name FROM \"user\" user_alias LIMIT 1 OFFSET 1"
-        
+
         query = QueryBuilder.from(User) |> QueryBuilder.select([:id, :name]) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio]) |> QueryBuilder.join(UserProfile, UserPhone, :inner, (:id, :user_profile_id), [:phone])
         @test Wasabi.execute_query(conn, query) == rq"SELECT user_alias.id, user_alias.name, user_profile_alias.bio, user_phone_alias.phone FROM \"user\" user_alias INNER JOIN \"user_profile\" user_profile_alias ON user_alias.id = user_profile_alias.user_id INNER JOIN \"user_phone\" user_phone_alias ON user_profile_alias.id = user_phone_alias.user_profile_id"
     end
@@ -133,6 +133,11 @@
     qb = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.where(:(and, (User, name, like, "%John%")))
     users = Wasabi.execute_query(conn, qb)
     @test length(users[!, :id]) == 2
+    
+    qb = QueryBuilder.from(User) |> QueryBuilder.select(User, :id, :total, :count)
+    totals = Wasabi.execute_query(conn, qb)
+    @test length(totals[!, :total]) == 1
+    @test totals[!, :total][1] == 3
 
     Wasabi.delete_all!(conn, User)
     @test length(Wasabi.all(conn, User)) == 0

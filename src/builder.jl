@@ -53,6 +53,7 @@ end
 Base.@kwdef struct SelectExpr{T<:Wasabi.Model}
     source::Type{T}
     field::Symbol
+    alias::Union{Symbol,Nothing} = nothing
     fn::Union{Symbol,Nothing} = nothing
 end
 
@@ -94,12 +95,12 @@ function select(select::Union{Vector{Symbol},Nothing}=nothing)
 end
 
 """
-    select(select::Vector{SelectExpr})
+    selectselect(source::Type{T}, field::Symbol, alias::Union{Symbol, Nothing} = nothing, fn::Union{Symbol, Nothing} = nothing) where {T<:Wasabi.Model}
     Sets the selected columns for the given query.
 """
-function select(source::Type{T}, field::Symbol, fn::Union{Symbol, Nothing} = nothing) where {T<:Wasabi.Model}
+function select(source::Type{T}, field::Symbol, alias::Union{Symbol,Nothing}=nothing, fn::Union{Symbol,Nothing}=nothing) where {T<:Wasabi.Model}
     return function (q::Query)
-        push!(q.select, SelectExpr(source=source, field=field, fn=fn))
+        push!(q.select, SelectExpr(source=source, field=field, alias=alias, fn=fn))
         q
     end
 end
@@ -195,9 +196,9 @@ end
 
 function build_select_expr(s::SelectExpr)
     if s.fn === nothing
-        return "$(Wasabi.alias(s.source)).$(String(s.field))"
+        return "$(Wasabi.alias(s.source)).$(String(s.field))" * (s.alias === nothing ? "" : " AS $(String(s.alias))")
     else
-        return "$(FN_MAPPING[s.fn])($(Wasabi.alias(s.source)).$(String(s.field)))"
+        return "$(FN_MAPPING[s.fn])($(Wasabi.alias(s.source)).$(String(s.field)))" * (s.alias === nothing ? "" : " AS $(String(s.alias))")
     end
 end
 
