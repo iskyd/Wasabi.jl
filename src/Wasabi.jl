@@ -92,15 +92,15 @@ function model2tuple(m::T) where {T<:Model}
 end
 
 """
-    coltype(mapping::Dict{Type,String}, col::Symbol, m::Type{T})::String where {T <: Model}
+    coltype(t::Type{S}, col::Symbol, m::Type{T})::String where {T <: Model}
     Returns the column type for the given column and model.
 """
-function coltype(mapping::Dict{Type,String}, m::Type{T}, col::Symbol)::String where {T<:Wasabi.Model}
+function coltype(db::Type{S}, m::Type{T}, col::Symbol)::String where {S,T<:Wasabi.Model}
     t = fieldtype(m, col)
     if t isa Union
         t = union_types(t)[findfirst(x -> x != Nothing, union_types(t))]
     end
-    return mapping[t]
+    return Wasabi.mapping(db, t)
 end
 
 """
@@ -108,6 +108,12 @@ end
     Returns the constraints for the given model.
 """
 constraints(m::Type{T}) where {T<:Model} = filter(c -> c !== nothing, [Wasabi.primary_key(m), Wasabi.foreign_keys(m)..., Wasabi.unique_constraints(m)...])
+
+"""
+    mapping(db::Type{S}, t::Type{T})::String where {S,T}
+    Returns the mapping for the given database and type.
+"""
+function mapping end
 
 """
     connect(config::ConnectionConfiguration)

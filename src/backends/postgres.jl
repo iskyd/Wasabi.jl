@@ -3,11 +3,9 @@ using LibPQ
 using Mocking
 using Wasabi: QueryBuilder
 
-POSTGRES_MAPPING_TYPES = Dict{Type,String}(
-    Int64 => "INTEGER",
-    String => "TEXT",
-    Bool => "BOOLEAN"
-)
+Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Int64}) = "INTEGER"
+Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{String}) = "TEXT"
+Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Bool}) = "BOOLEAN"
 
 Base.@kwdef struct PostgreSQLConnectionConfiguration <: Wasabi.ConnectionConfiguration
     endpoint::String
@@ -31,7 +29,7 @@ function Wasabi.delete_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasa
 end
 
 function Wasabi.create_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi.Model}
-    columns = [(col, coltype(POSTGRES_MAPPING_TYPES, m, col)) for col in Wasabi.colnames(m)]
+    columns = [(col, coltype(LibPQ.Connection, m, col)) for col in Wasabi.colnames(m)]
     query = "CREATE TABLE IF NOT EXISTS \"$(Wasabi.tablename(m))\" ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1]) ? "" : " NOT NULL") for col in columns], ", "))"
 
     constraints = Wasabi.constraints(m)

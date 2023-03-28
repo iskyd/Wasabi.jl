@@ -1,9 +1,6 @@
 @testset "coltype" begin
-    SAMPLE_MAPPING = Dict{Type,String}(
-        Int => "INTEGER",
-        String => "TEXT"
-    )
+    using SQLite
 
-    @test Wasabi.coltype(SAMPLE_MAPPING, User, :id) == "INTEGER"
-    @test Wasabi.coltype(SAMPLE_MAPPING, User, :name) == "TEXT"
+    @test Wasabi.coltype(SQLite.DB, User, :id) == "INTEGER"
+    @test Wasabi.coltype(SQLite.DB, User, :name) == "TEXT"
 end

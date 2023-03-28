@@ -3,13 +3,11 @@ using DataFrames
 using Mocking
 using Wasabi: QueryBuilder
 
-SQLITE_MAPPING_TYPES = Dict{Type,String}(
-    Int64 => "INTEGER",
-    String => "TEXT",
-    Bool => "INTEGER",
-    Float64 => "REAL",
-    Any => "BLOB"
-)
+Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Int64}) = "INTEGER"
+Wasabi.mapping(db::Type{SQLite.DB}, t::Type{String}) = "TEXT"
+Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Bool}) = "INTEGER"
+Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Float64}) = "REAL"
+Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Any}) = "BLOB"
 
 struct SQLiteConnectionConfiguration <: Wasabi.ConnectionConfiguration
     dbname::String
@@ -31,7 +29,7 @@ function Wasabi.delete_schema(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
 end
 
 function Wasabi.create_schema(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
-    columns = [(col, coltype(POSTGRES_MAPPING_TYPES, m, col)) for col in Wasabi.colnames(m)]
+    columns = [(col, coltype(SQLite.DB, m, col)) for col in Wasabi.colnames(m)]
     query = "CREATE TABLE IF NOT EXISTS $(Wasabi.tablename(m)) ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1]) ? "" : " NOT NULL") for col in columns], ", "))"
     
     constraints = Wasabi.constraints(m)
