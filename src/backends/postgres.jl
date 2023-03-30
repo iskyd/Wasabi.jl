@@ -1,11 +1,16 @@
 using DataFrames
 using LibPQ
 using Mocking
+using Dates
 using Wasabi: QueryBuilder
 
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Int64}) = "INTEGER"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{String}) = "TEXT"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Bool}) = "BOOLEAN"
+Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Float64}) = "REAL"
+Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Any}) = "BLOB"
+Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Date}) = "DATE"
+Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{DateTime}) = "TIMESTAMP"
 
 Base.@kwdef struct PostgreSQLConnectionConfiguration <: Wasabi.ConnectionConfiguration
     endpoint::String
@@ -29,7 +34,7 @@ function Wasabi.delete_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasa
 end
 
 function Wasabi.create_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi.Model}
-    columns = [(col, coltype(LibPQ.Connection, m, col)) for col in Wasabi.colnames(m)]
+    columns = [(col, Wasabi.mapping(LibPQ.Connection, coltype(m, col))) for col in Wasabi.colnames(m)]
     query = "CREATE TABLE IF NOT EXISTS \"$(Wasabi.tablename(m))\" ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1]) ? "" : " NOT NULL") for col in columns], ", "))"
 
     constraints = Wasabi.constraints(m)
@@ -87,7 +92,7 @@ end
 function Wasabi.insert!(conn::LibPQ.Connection, model::T) where {T<:Wasabi.Model}
     columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
     fields = map(column -> column[1], columns)
-    values = map(column -> column[2], columns)
+    values = map(column -> Wasabi.to_sql_value(column[2]), columns)
 
     query = "INSERT INTO \"$(Wasabi.tablename(typeof(model)))\" ($(join(fields, ", "))) VALUES ($(join(["\$$i" for i in 1:length(fields)], ", ")))"
     LibPQ.execute(conn, query, values)
@@ -101,7 +106,7 @@ end
 function Wasabi.update!(conn::LibPQ.Connection, model::T) where {T<:Wasabi.Model}
     columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
     fields = map(column -> column[1], columns)
-    values = (map(column -> column[2], columns)..., model.id)
+    values = (map(column -> Wasabi.to_sql_value(column[2]), columns)..., model.id)
 
     query = "UPDATE \"$(Wasabi.tablename(typeof(model)))\" SET $(join([String(fields[i]) * " = \$$i" for i in 1:length(fields)], ", ")) WHERE id = \$$(length(fields) + 1)"
     LibPQ.execute(conn, query, values)

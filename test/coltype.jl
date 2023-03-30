@@ -1,6 +1,7 @@
 @testset "coltype" begin
     using SQLite
 
-    @test Wasabi.coltype(SQLite.DB, User, :id) == "INTEGER"
-    @test Wasabi.coltype(SQLite.DB, User, :name) == "TEXT"
+    @test Wasabi.coltype(User, :id) == Int
+    @test Wasabi.coltype(User, :name) == String
+    @test Wasabi.coltype(User, :created_at) == DateTime
 end

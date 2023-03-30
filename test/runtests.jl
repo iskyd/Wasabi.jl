@@ -4,12 +4,14 @@ using Test
 using Wasabi
 using Mocking
 using Random
+using Dates
 
 Random.seed!(42)
 
 mutable struct User <: Wasabi.Model
     id::Int
     name::String
+    created_at::DateTime
 end
 
 struct UserProfile <: Wasabi.Model
@@ -53,3 +55,4 @@ addtests("migrations.jl")
 addtests("postgres.jl")
 addtests("sqlite.jl")
 addtests("tablename.jl")
+addtests("types.jl")

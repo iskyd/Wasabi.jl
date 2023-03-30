@@ -1,6 +1,7 @@
 module Wasabi
 
 using DataFrames
+using Dates
 
 export Migrations
 export QueryBuilder
@@ -80,7 +81,7 @@ union_types(x::Type) = (x,)
     Converts the given DataFrame to the given model.
 """
 function df2model(m::Type{T}, df::DataFrame) where {T<:Wasabi.Model}
-    return [m(map(col -> row[col], Wasabi.colnames(m))...) for row in eachrow(df)]
+    return [m(map(col -> Wasabi.from_sql_value(coltype(m, col), row[col]), Wasabi.colnames(m))...) for row in eachrow(df)]
 end
 
 """
@@ -95,12 +96,12 @@ end
     coltype(t::Type{S}, col::Symbol, m::Type{T})::String where {T <: Model}
     Returns the column type for the given column and model.
 """
-function coltype(db::Type{S}, m::Type{T}, col::Symbol)::String where {S,T<:Wasabi.Model}
+function coltype(m::Type{T}, col::Symbol) where {S,T<:Wasabi.Model}
     t = fieldtype(m, col)
     if t isa Union
         t = union_types(t)[findfirst(x -> x != Nothing, union_types(t))]
     end
-    return Wasabi.mapping(db, t)
+    return t
 end
 
 """
@@ -205,9 +206,22 @@ function commit! end
 """
 function rollback end
 
+"""
+    to_sql_value(db::Type{Any}, v::Any)
+    Converts the given value to a value that can be used in a SQL query.
+"""
+function to_sql_value end
+
+"""
+    from_sql_value(db::Type{Any}, v::Any)
+    Converts the SQL value to the struct type value.
+"""
+function from_sql_value end
+
 include("constraints.jl")
 include("builder.jl")
 include("migrations.jl")
+include("types.jl")
 include("backends/sqlite.jl")
 include("backends/postgres.jl")
 
