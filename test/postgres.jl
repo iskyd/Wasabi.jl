@@ -17,7 +17,7 @@
     apply(patch) do
         @test Wasabi.delete_schema(conn, UserProfile) == "DROP TABLE IF EXISTS \"user_profile\""
         @test Wasabi.delete_schema(conn, User) == "DROP TABLE IF EXISTS \"user\""
-        @test Wasabi.create_schema(conn, User) == "CREATE TABLE IF NOT EXISTS \"user\" (id INTEGER NOT NULL, name TEXT NOT NULL, PRIMARY KEY (id))"
+        @test Wasabi.create_schema(conn, User) == "CREATE TABLE IF NOT EXISTS \"user\" (id INTEGER NOT NULL, name TEXT NOT NULL, created_at TIMESTAMP NOT NULL, PRIMARY KEY (id))"
     end
 
     apply(patch) do
@@ -41,8 +41,9 @@
     Wasabi.create_schema(conn, User)
     Wasabi.create_schema(conn, UserProfile)
 
-    query = rq"INSERT INTO \"user\" (id, name) VALUES ($1, $2)"
-    Wasabi.execute_query(conn, query, Any[1, "John Doe"])
+    dtnow = Dates.now()
+    query = rq"INSERT INTO \"user\" (id, name, created_at) VALUES ($1, $2, $3)"
+    Wasabi.execute_query(conn, query, Any[1, "John Doe", dtnow])
 
     query = rq"SELECT * FROM \"user\""
     result = Wasabi.execute_query(conn, query)
@@ -50,32 +51,38 @@
     @test length(result[!, :id]) == 1
     @test result[!, :id][1] == 1
     @test result[!, :name][1] == "John Doe"
+    @test result[!, :created_at][1] == dtnow
 
     user = Wasabi.df2model(User, result)[1]
     @test user.id == 1
     @test user.name == "John Doe"
+    @test user.created_at == dtnow
 
-    query = rq"INSERT INTO \"user\" (id, name) VALUES ($1, $2)"
-    Wasabi.execute_query(conn, query, Any[2, "Jane Doe"])
+    query = rq"INSERT INTO \"user\" (id, name, created_at) VALUES ($1, $2, $3)"
+    Wasabi.execute_query(conn, query, Any[2, "Jane Doe", dtnow])
 
     query = rq"SELECT * FROM \"user\""
     result = Wasabi.execute_query(conn, query)
     @test length(result[!, :id]) == 2
     @test result[!, :id][1] == 1
     @test result[!, :name][1] == "John Doe"
+    @test result[!, :created_at][1] == dtnow
     @test result[!, :id][2] == 2
     @test result[!, :name][2] == "Jane Doe"
+    @test result[!, :created_at][2] == dtnow
 
     users = Wasabi.df2model(User, result)
     @test length(users) == 2
     @test users[1].id == 1
     @test users[1].name == "John Doe"
+    @test users[1].created_at == dtnow
     @test users[2].id == 2
     @test users[2].name == "Jane Doe"
+    @test users[2].created_at == dtnow
 
     Wasabi.begin_transaction(conn)
-    query = rq"INSERT INTO \"user\" (id, name) VALUES ($1, $2)"
-    Wasabi.execute_query(conn, query, Any[3, "John Doe"])
+    query = rq"INSERT INTO \"user\" (id, name, created_at) VALUES ($1, $2, $3)"
+    Wasabi.execute_query(conn, query, Any[3, "John Doe", dtnow])
     Wasabi.rollback(conn)
 
     query = rq"SELECT * FROM \"user\""
@@ -83,8 +90,8 @@
     @test length(result[!, :id]) == 2
 
     Wasabi.begin_transaction(conn)
-    query = rq"INSERT INTO \"user\" (id, name) VALUES ($1, $2)"
-    Wasabi.execute_query(conn, query, Any[3, "John Doe"])
+    query = rq"INSERT INTO \"user\" (id, name, created_at) VALUES ($1, $2, $3)"
+    Wasabi.execute_query(conn, query, Any[3, "John Doe", dtnow])
     Wasabi.commit!(conn)
 
     query = rq"SELECT * FROM \"user\""
@@ -101,7 +108,7 @@
     user = Wasabi.first(conn, User, 10)
     @test user === nothing
 
-    new_user = User(10, "John Doe")
+    new_user = User(10, "John Doe", dtnow)
     Wasabi.insert!(conn, new_user)
 
     user = Wasabi.first(conn, User, 10)
@@ -129,11 +136,12 @@
     user = Wasabi.df2model(User, users)[1]
     @test user.id == 2
     @test user.name == "Jane Doe"
+    @test user.created_at == dtnow
 
     qb = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.where(:(and, (User, name, like, "%John%")))
     users = Wasabi.execute_query(conn, qb)
     @test length(users[!, :id]) == 2
-    
+
     qb = QueryBuilder.from(User) |> QueryBuilder.select(User, :id, :total, :count)
     totals = Wasabi.execute_query(conn, qb)
     @test length(totals[!, :total]) == 1
