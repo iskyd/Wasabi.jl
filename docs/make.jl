@@ -12,14 +12,15 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://iskyd.github.io/Wasabi.jl",
         edit_link="main",
-        assets=String[],
+        assets=String[]
     ),
     pages=[
         "Home" => "index.md",
         "API" => "api.md",
-        "Migrations" => "migrations.md",
         "Query Builder" => "querybuilder.md",
-    ],
+        "Migrations" => "migrations.md",
+        "Create Custom Type" => "customtype.md"
+    ]
 )
 
 deploydocs(;
