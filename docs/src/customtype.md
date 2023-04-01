@@ -3,7 +3,9 @@
 You can implement a new custom type just implementing some functions.
 
 ```Wasabi.to_sql_value(value::CustomType)``` is used to convert the custom type to the database type
+
 ```Wasabi.from_sql_value(t::Type{CustomType}, value::Any)``` is used to convert the value from the database to your custom type
+
 ```Wasabi.mapping(db::Type{SQLite.DB}, t::Type{CustomType})``` is used to define the database type
 
 Suppose you want to create a JSON type called CustomType that is converted as TEXT on the database.
