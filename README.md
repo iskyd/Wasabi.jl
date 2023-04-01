@@ -4,6 +4,7 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://iskyd.github.io/Wasabi.jl/dev/)
 [![Build Status](https://github.com/iskyd/Wasabi.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/iskyd/Wasabi.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/iskyd/Wasabi.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/iskyd/Wasabi.jl)
+[![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 
 Wasabi is a simple yet powerful ORM for the Julia Language. It currently supports postgresql and sqlite (more to come soon). Wasabi gives you access to a powerful query builder so that you don't need to write SQL and it automatically takes care of query params. It also gives you a simple way to manage tables and their updates using simple migrations.

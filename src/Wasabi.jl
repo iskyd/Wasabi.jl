@@ -93,10 +93,10 @@ function model2tuple(m::T) where {T<:Model}
 end
 
 """
-    coltype(t::Type{S}, col::Symbol, m::Type{T})::String where {T <: Model}
+    coltype(m::Type{T}, col::Symbol) where {T <: Model}
     Returns the column type for the given column and model.
 """
-function coltype(m::Type{T}, col::Symbol) where {S,T<:Wasabi.Model}
+function coltype(m::Type{T}, col::Symbol) where {T<:Wasabi.Model}
     t = fieldtype(m, col)
     if t isa Union
         t = union_types(t)[findfirst(x -> x != Nothing, union_types(t))]

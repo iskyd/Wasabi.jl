@@ -44,6 +44,7 @@ function addtests(fname)
     end
 end
 
+addtests("aqua.jl")
 addtests("ambiguities.jl")
 addtests("builder.jl")
 addtests("colnames.jl")
