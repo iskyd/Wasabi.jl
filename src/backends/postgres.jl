@@ -11,6 +11,7 @@ Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Float64}) = "REAL"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Any}) = "BLOB"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Date}) = "DATE"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{DateTime}) = "TIMESTAMP"
+Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{AutoIncrement}) = "SERIAL"
 
 Base.@kwdef struct PostgreSQLConnectionConfiguration <: Wasabi.ConnectionConfiguration
     endpoint::String
@@ -94,19 +95,30 @@ function Wasabi.insert!(conn::LibPQ.Connection, model::T) where {T<:Wasabi.Model
     fields = map(column -> column[1], columns)
     values = map(column -> Wasabi.to_sql_value(column[2]), columns)
 
-    query = "INSERT INTO \"$(Wasabi.tablename(typeof(model)))\" ($(join(fields, ", "))) VALUES ($(join(["\$$i" for i in 1:length(fields)], ", ")))"
-    LibPQ.execute(conn, query, values)
+    primary_keys = Wasabi.primary_key(typeof(model))
+    primary_key_fields = primary_keys !== nothing ? primary_keys.fields : []
+
+    query = "INSERT INTO \"$(Wasabi.tablename(typeof(model)))\" ($(join(fields, ", "))) VALUES ($(join(["\$$i" for i in 1:length(fields)], ", ")))" * (length(primary_key_fields) > 0 ? (" RETURNING " * join(primary_key_fields, ", ")) : "")
+    keys = LibPQ.execute(conn, query, values) |> DataFrame
+
+    if ismutabletype(typeof(model))
+        for primary_key in primary_key_fields
+            setproperty!(model, primary_key, Wasabi.from_sql_value(Wasabi.coltype(typeof(model), primary_key), keys[1, primary_key]))
+        end
+    end
+
+    return keys
 end
 
 function Wasabi.delete!(conn::LibPQ.Connection, model::T) where {T<:Wasabi.Model}
     query = "DELETE FROM \"$(Wasabi.tablename(typeof(model)))\" WHERE id = \$1"
-    LibPQ.execute(conn, query, Any[model.id])
+    LibPQ.execute(conn, query, Any[Wasabi.to_sql_value(model.id)])
 end
 
 function Wasabi.update!(conn::LibPQ.Connection, model::T) where {T<:Wasabi.Model}
     columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
     fields = map(column -> column[1], columns)
-    values = (map(column -> Wasabi.to_sql_value(column[2]), columns)..., model.id)
+    values = (map(column -> Wasabi.to_sql_value(column[2]), columns)..., Wasabi.to_sql_value(model.id))
 
     query = "UPDATE \"$(Wasabi.tablename(typeof(model)))\" SET $(join([String(fields[i]) * " = \$$i" for i in 1:length(fields)], ", ")) WHERE id = \$$(length(fields) + 1)"
     LibPQ.execute(conn, query, values)

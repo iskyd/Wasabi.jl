@@ -11,6 +11,7 @@ Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Float64}) = "REAL"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Any}) = "BLOB"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Date}) = "TEXT"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{DateTime}) = "TEXT"
+Wasabi.mapping(db::Type{SQLite.DB}, t::Type{AutoIncrement}) = "INTEGER"
 
 struct SQLiteConnectionConfiguration <: Wasabi.ConnectionConfiguration
     dbname::String
@@ -92,19 +93,32 @@ function Wasabi.insert!(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     fields = map(column -> column[1], columns)
     values = map(column -> Wasabi.to_sql_value(column[2]), columns)
 
-    query = "INSERT INTO $(Wasabi.tablename(typeof(model))) ($(join(fields, ", "))) VALUES ($(join(fill("?", length(fields)), ", ")))"
-    SQLite.DBInterface.execute(db, query, values)
+    primary_keys = Wasabi.primary_key(typeof(model))
+    primary_key_fields = primary_keys !== nothing ? primary_keys.fields : []
+
+    query = "INSERT INTO $(Wasabi.tablename(typeof(model))) ($(join(fields, ", "))) VALUES ($(join(fill("?", length(fields)), ", ")))" * (length(primary_key_fields) > 0 ? (" RETURNING " * join(primary_key_fields, ", ")) : "")
+    keys = SQLite.DBInterface.execute(db, query, values) |> DataFrame
+    
+    if ismutabletype(typeof(model))
+        for primary_key in primary_key_fields
+            setproperty!(model, primary_key, Wasabi.from_sql_value(Wasabi.coltype(typeof(model), primary_key), keys[1, primary_key]))
+        end
+    end
+    
+    return keys
 end
 
 function Wasabi.delete!(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     query = "DELETE FROM $(Wasabi.tablename(typeof(model))) WHERE id = ?"
-    SQLite.DBInterface.execute(db, query, Any[model.id])
+    SQLite.DBInterface.execute(db, query, Any[Wasabi.to_sql_value(model.id)])
+
+    nothing
 end
 
 function Wasabi.update!(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
     columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
     fields = map(column -> column[1], columns)
-    values = (map(column -> Wasabi.to_sql_value(column[2]), columns)..., model.id)
+    values = (map(column -> Wasabi.to_sql_value(column[2]), columns)..., Wasabi.to_sql_value(model.id))
 
     query = "UPDATE $(Wasabi.tablename(typeof(model))) SET $(join([String(field) * " = ?" for field in fields], ", ")) WHERE id = ?"
     SQLite.DBInterface.execute(db, query, values)

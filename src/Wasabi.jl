@@ -5,6 +5,7 @@ using Dates
 
 export Migrations
 export QueryBuilder
+export AutoIncrement
 export @rq_str
 
 abstract type Model end
@@ -217,6 +218,18 @@ function to_sql_value end
     Converts the SQL value to the struct type value.
 """
 function from_sql_value end
+
+"""
+    autoincrement(m::Type{T}, col::Symbol) where {T <: Model}
+    Returns true if the given column is autoincrement.
+"""
+function autoincrement(m::Type{T}, col::Symbol) where {T<:Model}
+    primary_key_constraint = Wasabi.primary_key(m)
+    if primary_key_constraint !== nothing && col in primary_key_constraint.fields && primary_key_constraint.autoincrement === true
+        return true
+    end
+    return false
+end
 
 include("constraints.jl")
 include("builder.jl")

@@ -35,8 +35,8 @@
     Wasabi.create_schema(conn, UserProfile)
 
     dtnow = Dates.now()
-    query = rq"INSERT INTO user (id, name, created_at) VALUES (?, ?, ?)"
-    Wasabi.execute_query(conn, query, Any[1, "John Doe", dtnow])
+    query = rq"INSERT INTO user (name, created_at) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any["John Doe", dtnow])
 
     query = rq"SELECT * FROM user"
     result = Wasabi.execute_query(conn, query)
@@ -46,12 +46,12 @@
     @test result[!, :created_at][1] == dtnow
 
     user = Wasabi.df2model(User, result)[1]
-    @test user.id == 1
+    @test user.id == AutoIncrement(1)
     @test user.name == "John Doe"
     @test user.created_at == dtnow
 
-    query = rq"INSERT INTO user (id, name, created_at) VALUES (?, ?, ?)"
-    Wasabi.execute_query(conn, query, Any[2, "Jane Doe", dtnow])
+    query = rq"INSERT INTO user (name, created_at) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any["Jane Doe", dtnow])
 
     query = rq"SELECT * FROM user"
     result = Wasabi.execute_query(conn, query)
@@ -65,16 +65,16 @@
 
     users = Wasabi.df2model(User, result)
     @test length(users) == 2
-    @test users[1].id == 1
+    @test users[1].id == AutoIncrement(1)
     @test users[1].name == "John Doe"
     @test users[1].created_at == dtnow
-    @test users[2].id == 2
+    @test users[2].id == AutoIncrement(2)
     @test users[2].name == "Jane Doe"
     @test users[2].created_at == dtnow
 
     Wasabi.begin_transaction(conn)
-    query = rq"INSERT INTO user (id, name, created_at) VALUES (?, ?, ?)"
-    Wasabi.execute_query(conn, query, Any[3, "John Doe", dtnow])
+    query = rq"INSERT INTO user (name, created_at) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any["John Doe", dtnow])
     Wasabi.rollback(conn)
 
     query = rq"SELECT * FROM user"
@@ -82,8 +82,8 @@
     @test length(result[!, :id]) == 2
 
     Wasabi.begin_transaction(conn)
-    query = rq"INSERT INTO user (id, name, created_at) VALUES (?, ?, ?)"
-    Wasabi.execute_query(conn, query, Any[3, "John Doe", dtnow])
+    query = rq"INSERT INTO user (name, created_at) VALUES (?, ?)"
+    Wasabi.execute_query(conn, query, Any["John Doe", dtnow])
     Wasabi.commit!(conn)
 
     query = rq"SELECT * FROM user"
@@ -91,31 +91,32 @@
     @test length(result[!, :id]) == 3
 
     user = Wasabi.first(conn, User, 1)
-    @test user.id == 1
+    @test user.id == AutoIncrement(1)
     @test user.name == "John Doe"
 
     user = Wasabi.first(conn, User, 10)
     @test user === nothing
 
-    new_user = User(10, "John Doe", dtnow)
-    Wasabi.insert!(conn, new_user)
+    new_user = User("John Doe", dtnow)
+    keys = Wasabi.insert!(conn, new_user)
+    @test keys[1, 1] == 4
 
-    user = Wasabi.first(conn, User, 10)
-    @test user.id == 10
+    user = Wasabi.first(conn, User, 4)
+    @test user.id == AutoIncrement(4)
     @test user.name == "John Doe"
     @test user.created_at == dtnow
 
     user.name = "Jane Doe"
     Wasabi.update!(conn, user)
 
-    user = Wasabi.first(conn, User, 10)
-    @test user.id == 10
+    user = Wasabi.first(conn, User, 4)
+    @test user.id == AutoIncrement(4)
     @test user.name == "Jane Doe"
     @test user.created_at == dtnow
 
     Wasabi.delete!(conn, user)
 
-    user = Wasabi.first(conn, User, 10)
+    user = Wasabi.first(conn, User, 4)
     @test user === nothing
 
     users = Wasabi.all(conn, User)
@@ -125,7 +126,7 @@
     users = Wasabi.execute_query(conn, qb)
     @test length(users[!, :id]) == 1
     user = Wasabi.df2model(User, users)[1]
-    @test user.id == 2
+    @test user.id == AutoIncrement(2)
     @test user.name == "Jane Doe"
     @test user.created_at == dtnow
 

@@ -9,9 +9,12 @@ using Dates
 Random.seed!(42)
 
 mutable struct User <: Wasabi.Model
-    id::Int
+    id::Union{Nothing, AutoIncrement}
     name::String
     created_at::DateTime
+
+    User(name::String, created_at::DateTime) = new(nothing, name, created_at)
+    User(id::AutoIncrement, name::String, created_at::DateTime) = new(id, name, created_at)
 end
 
 struct UserProfile <: Wasabi.Model
@@ -33,7 +36,6 @@ Wasabi.foreign_keys(m::Type{UserProfile}) = [Wasabi.ForeignKeyConstraint(Symbol[
 Wasabi.foreign_keys(m::Type{UserPhone}) = [Wasabi.ForeignKeyConstraint(Symbol[:user_profile_id], :user_profile, Symbol[:id])]
 
 Wasabi.unique_constraints(m::Type{UserProfile}) = [Wasabi.UniqueConstraint(Symbol[:user_id])]
-
 
 enabled_tests = lowercase.(ARGS)
 function addtests(fname)
