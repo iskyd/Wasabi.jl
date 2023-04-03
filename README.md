@@ -15,8 +15,10 @@ Wasabi is a simple yet powerful ORM for the Julia Language. It currently support
 using Wasabi
 
 mutable struct User <: Wasabi.Model
-    id::Int
+    id::Union{Nothing, AutoIncrement}
     name::String
+
+    User(name::string) = new(nothing, name)
 end
 
 Wasabi.primary_key(m::Type{User}) = Wasabi.PrimaryKeyConstraint(Symbol[:id])
@@ -36,10 +38,12 @@ conn = Wasabi.connect(configuration)
 Wasabi.create_schema(conn, User)
 Wasabi.create_schema(conn, UserProfile)
 
-user = User(1, "John Doe")
-Wasabi.insert!(conn, user)
+user = User("John Doe")
+keys = Wasabi.insert!(conn, user)
 
-u = Wasabi.first(conn, User, 1)
+# println(user.id) -> 1
+
+u = Wasabi.first(conn, User, keys[!, :id])
 
 Wasabi.begin_transaction(conn)
 try

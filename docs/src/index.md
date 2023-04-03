@@ -10,7 +10,7 @@ Wasabi is a simple ORM for Julia. It currently supports PostgreSQL and SQLite.
 using Wasabi
 
 mutable struct User <: Wasabi.Model
-    id::Int
+    id::Union{Nothing, AutoIncrement}
     name::String
 end
 
@@ -31,10 +31,13 @@ conn = Wasabi.connect(configuration)
 Wasabi.create_schema(conn, User)
 Wasabi.create_schema(conn, UserProfile)
 
-user = User(1, "John Doe")
+user = User("John Doe")
 Wasabi.insert!(conn, user)
 
-u = Wasabi.first(conn, User, 1)
+# If struct is mutable, autoincrement id is automatically set to the model
+# println(user.id) -> 1
+
+u = Wasabi.first(conn, User, keys[!, :id])
 
 Wasabi.begin_transaction(conn)
 try
