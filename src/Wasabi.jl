@@ -82,7 +82,7 @@ union_types(x::Type) = (x,)
     Converts the given DataFrame to the given model.
 """
 function df2model(m::Type{T}, df::DataFrame) where {T<:Wasabi.Model}
-    return [m(map(col -> Wasabi.from_sql_value(coltype(m, col), row[col]), Wasabi.colnames(m))...) for row in eachrow(df)]
+    return [m(map(col -> row[col] !== missing ? Wasabi.from_sql_value(coltype(m, col), row[col]) : nothing, Wasabi.colnames(m))...) for row in eachrow(df)]
 end
 
 """
