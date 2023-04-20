@@ -147,6 +147,10 @@
     @test length(totals[!, :total]) == 1
     @test totals[!, :total][1] == 3
 
+    qb = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.where(:(and, (User, id, in, [1, 2])))
+    users = Wasabi.execute_query(conn, qb)
+    @test length(users[!, :id]) == 2
+
     Wasabi.delete_all!(conn, User)
     @test length(Wasabi.all(conn, User)) == 0
 

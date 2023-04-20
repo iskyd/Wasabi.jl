@@ -189,8 +189,14 @@ function build_where_expr(e::Expr, params::Vector{Any}; top=true)
         return (top == true ? "WHERE " : "") * "(" * Base.join(map(x -> build_where_expr(x, params, top=false), args[2:end]), " $(uppercase(string(args[1]))) ") * ")"
     else
         model, field, rel, value = args
-        push!(params, eval(value))
-        return "$(Wasabi.alias(string(model))).$(string(field)) $(REL_MAPPING[rel]) \$$(length(params))"
+        p = eval(value)
+        if typeof(p) <: AbstractArray || typeof(p) <: Tuple
+            push!(params, p...)
+            return "$(Wasabi.alias(string(model))).$(string(field)) $(REL_MAPPING[rel]) ($(Base.join(map(v -> "\$$(length(params) - length(p) + v[1])", enumerate(p)), ", ")))"
+        else
+            push!(params, p)
+            return "$(Wasabi.alias(string(model))).$(string(field)) $(REL_MAPPING[rel]) \$$(length(params))"
+        end
     end
 end
 
