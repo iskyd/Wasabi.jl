@@ -5,8 +5,6 @@ using Wasabi
 using Mocking
 using Random
 using Dates
-using WasabiSQLite
-using WasabiPostgreSQL
 
 Random.seed!(42)
 
@@ -55,10 +53,5 @@ addtests("colnames.jl")
 addtests("coltype.jl")
 addtests("constraints.jl")
 addtests("isnullable.jl")
-addtests("mapping.jl")
-addtests("migrations.jl")
-addtests("postgresql.jl")
-addtests("sqlite.jl")
 addtests("tablename.jl")
 addtests("types.jl")
-addtests("custom_type.jl")

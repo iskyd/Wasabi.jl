@@ -3,7 +3,6 @@ module Wasabi
 using DataFrames
 using Dates
 
-export Migrations
 export QueryBuilder
 export AutoIncrement
 export @rq_str
@@ -225,7 +224,6 @@ function from_sql_value end
 
 include("constraints.jl")
 include("builder.jl")
-include("migrations.jl")
 include("types.jl")
 
 end
