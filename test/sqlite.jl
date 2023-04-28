@@ -1,8 +1,6 @@
 @testset "sqlite" begin
     using SQLite
 
-    Wasabi.init_backend(Wasabi.SQLiteBackend())
-
     configuration = WasabiSQLite.ConnectionConfiguration("test.db")
     conn = Wasabi.connect(configuration)
 

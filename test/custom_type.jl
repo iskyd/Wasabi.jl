@@ -6,8 +6,6 @@
         value::Dict
     end
 
-    Wasabi.init_backend(Wasabi.SQLiteBackend())
-
     Wasabi.mapping(db::Type{SQLite.DB}, t::Type{CustomType}) = "TEXT"
     Wasabi.to_sql_value(value::CustomType) = JSON.json(value.value)
     Wasabi.from_sql_value(t::Type{CustomType}, value::Any) = CustomType(JSON.parse(value))

@@ -8,10 +8,10 @@ Wasabi is a simple ORM for Julia. It currently supports PostgreSQL and SQLite.
 
 ```
 using Wasabi
+using WasabiSQLite
 
 # connect to database
-Wasabi.init_backend(Wasabi.SQLiteBackend())
-configuration = Wasabi.ConnectionConfiguration("test.db")
+configuration = WasabiSQLite.ConnectionConfiguration("test.db")
 conn = Wasabi.connect(configuration)
 
 # declare models

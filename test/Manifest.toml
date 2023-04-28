@@ -2,7 +2,7 @@
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "dd900ea5fc4572b860531c3d67d9a17caf50b209"
+project_hash = "3e7e89ef66b83f027e94ad0827ec04df2845db7b"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -452,6 +452,24 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[deps.Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
+
+[[deps.Wasabi]]
+deps = ["DataFrames", "Dates", "Mocking", "Random"]
+git-tree-sha1 = "f6ae504fc771320288b8e5e4ac4fab2a7f4ebdeb"
+uuid = "cec542a4-22c5-46cb-8ca4-a46a7737b387"
+version = "0.3.1"
+
+[[deps.WasabiPostgreSQL]]
+deps = ["DataFrames", "Dates", "LibPQ", "Mocking", "Wasabi"]
+git-tree-sha1 = "8a0d05751ee891032f46808ef8ec56d1f7162d6a"
+uuid = "0f18cbf3-d1d5-4cf3-8476-e4bcf7a88230"
+version = "0.1.0"
+
+[[deps.WasabiSQLite]]
+deps = ["DataFrames", "Dates", "Mocking", "SQLite", "Wasabi"]
+git-tree-sha1 = "a12d4bea962c8c818f93439cf228286744c58dc6"
+uuid = "caef0f7d-b9ca-48eb-ae86-2541e95d1720"
+version = "0.1.0"
 
 [[deps.WeakRefStrings]]
 deps = ["DataAPI", "InlineStrings", "Parsers"]

@@ -1,8 +1,6 @@
 @testset "postgres" begin
     using LibPQ
 
-    Wasabi.init_backend(Wasabi.PostgreSQLBackend())
-
     configuration = WasabiPostgreSQL.ConnectionConfiguration(
         endpoint="localhost",
         username="postgres",

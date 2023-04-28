@@ -18,8 +18,8 @@ Migrations.generate(path)
 Next you can update (upgrade/downgrade) the database to the required version doing
 ```
 using Wasbi
+using WasabiSQLite
 
-Wasabi.init_backend(Wasabi.SQLiteBackend())
 version = "xxx" # using Migrations.get_last_version(path) gives you the latest available migration
 Migrations.execute(db, path, version)
 ```

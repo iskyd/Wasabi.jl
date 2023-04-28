@@ -5,6 +5,8 @@ using Wasabi
 using Mocking
 using Random
 using Dates
+using WasabiSQLite
+using WasabiPostgreSQL
 
 Random.seed!(42)
 

@@ -223,16 +223,6 @@ function to_sql_value end
 """
 function from_sql_value end
 
-function init_backend(backend::T, mod = Main) where {T<:DatabaseBackend}
-    if backend === SQLiteBackend()
-        path = normpath(@__DIR__, "backends", "sqlite.jl")
-        Base.include(mod, path)
-    elseif backend === PostgreSQLBackend()
-        path = normpath(@__DIR__, "backends", "postgresql.jl")
-        Base.include(mod, path)
-    end
-end
-
 include("constraints.jl")
 include("builder.jl")
 include("migrations.jl")

@@ -13,9 +13,8 @@ Wasabi is a simple yet powerful ORM for the Julia Language. It currently support
 
 ```
 using Wasabi
+using WasabiSQLite
 
-# connect to database
-Wasabi.init_backend(Wasabi.SQLiteBackend())
 configuration = WasabiSQLite.ConnectionConfiguration("test.db")
 conn = Wasabi.connect(configuration)
 
