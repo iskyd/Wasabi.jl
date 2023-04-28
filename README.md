@@ -14,6 +14,12 @@ Wasabi is a simple yet powerful ORM for the Julia Language. It currently support
 ```
 using Wasabi
 
+# connect to database
+Wasabi.init_backend(Wasabi.SQLiteBackend())
+configuration = WasabiSQLite.ConnectionConfiguration("test.db")
+conn = Wasabi.connect(configuration)
+
+# declare models
 mutable struct User <: Wasabi.Model
     id::Union{Nothing, AutoIncrement}
     name::String
@@ -31,10 +37,6 @@ end
 
 Wasabi.primary_key(m::Type{UserProfile}) = Wasabi.PrimaryKeyConstraint(Symbol[:id])
 Wasabi.foreign_keys(m::Type{UserProfile}) = [Wasabi.ForeignKeyConstraint(Symbol[:user_id], :user, Symbol[:id])]
-
-Wasabi.init_backend(Wasabi.SQLiteBackend())
-configuration = WasabiSQLite.ConnectionConfiguration("test.db")
-conn = Wasabi.connect(configuration)
 
 Wasabi.create_schema(conn, User)
 Wasabi.create_schema(conn, UserProfile)
