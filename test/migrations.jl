@@ -1,5 +1,9 @@
 @testset "migrations" begin
-    configuration = Wasabi.SQLiteConnectionConfiguration("test.db")
+    using SQLite
+
+    Wasabi.init_backend(Wasabi.SQLiteBackend())
+
+    configuration = WasabiSQLite.ConnectionConfiguration("test.db")
     conn = Wasabi.connect(configuration)
 
     path = mkdir("migrations/")

@@ -11,6 +11,8 @@ You can implement a new custom type just implementing some functions.
 Suppose you want to create a JSON type called CustomType that is converted as TEXT on the database.
 
 ```
+using SQLite
+
 struct CustomType
     value::Dict
 end

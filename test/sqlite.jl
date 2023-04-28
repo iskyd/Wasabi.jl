@@ -1,7 +1,9 @@
 @testset "sqlite" begin
     using SQLite
 
-    configuration = Wasabi.SQLiteConnectionConfiguration("test.db")
+    Wasabi.init_backend(Wasabi.SQLiteBackend())
+
+    configuration = WasabiSQLite.ConnectionConfiguration("test.db")
     conn = Wasabi.connect(configuration)
 
     Mocking.activate()

@@ -13,7 +13,8 @@ mutable struct User <: Wasabi.Model
     name::String
 end
 
-configuration = Wasabi.SQLiteConnectionConfiguration("test.db")
+Wasabi.init_backend(Wasabi.SQLiteBackend())
+configuration = Wasabi.ConnectionConfiguration("test.db")
 conn = Wasabi.connect(configuration)
 
 query = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.limit(1)

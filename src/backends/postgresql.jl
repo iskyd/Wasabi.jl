@@ -1,8 +1,10 @@
+module WasabiPostgreSQL
+
 using DataFrames
 using LibPQ
 using Mocking
 using Dates
-using Wasabi: QueryBuilder
+using Wasabi
 
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Int64}) = "INTEGER"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{String}) = "TEXT"
@@ -13,7 +15,7 @@ Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Date}) = "DATE"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{DateTime}) = "TIMESTAMP"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{AutoIncrement}) = "SERIAL"
 
-Base.@kwdef struct PostgreSQLConnectionConfiguration <: Wasabi.ConnectionConfiguration
+Base.@kwdef struct ConnectionConfiguration <: Wasabi.ConnectionConfiguration
     endpoint::String
     username::String
     password::String
@@ -21,7 +23,7 @@ Base.@kwdef struct PostgreSQLConnectionConfiguration <: Wasabi.ConnectionConfigu
     dbname::String
 end
 
-function Wasabi.connect(config::PostgreSQLConnectionConfiguration)::LibPQ.Connection
+function Wasabi.connect(config::ConnectionConfiguration)::LibPQ.Connection
     LibPQ.Connection(
         "host=" * config.endpoint * " user=" * config.username * " password=" * config.password * " port=" * string(config.port) * " dbname=" * config.dbname
     )
@@ -35,7 +37,7 @@ function Wasabi.delete_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasa
 end
 
 function Wasabi.create_schema(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi.Model}
-    columns = [(col, Wasabi.mapping(LibPQ.Connection, coltype(m, col))) for col in Wasabi.colnames(m)]
+    columns = [(col, Wasabi.mapping(LibPQ.Connection, Wasabi.coltype(m, col))) for col in Wasabi.colnames(m)]
     query = "CREATE TABLE IF NOT EXISTS \"$(Wasabi.tablename(m))\" ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1]) ? "" : " NOT NULL") for col in columns], ", "))"
 
     constraints = Wasabi.constraints(m)
@@ -60,7 +62,7 @@ function postgres_constraint_to_sql(constraint::Wasabi.UniqueConstraint)::String
     return "UNIQUE ($(join(constraint.fields, ", ")))"
 end
 
-function Wasabi.execute_query(conn::LibPQ.Connection, query::RawQuery, params::Vector{Any}=Any[])
+function Wasabi.execute_query(conn::LibPQ.Connection, query::Wasabi.RawQuery, params::Vector{Any}=Any[])
     return LibPQ.execute(conn, query.value, params) |> DataFrame
 end
 
@@ -81,7 +83,7 @@ function Wasabi.rollback(conn::LibPQ.Connection)
 end
 
 function Wasabi.first(conn::LibPQ.Connection, m::Type{T}, id) where {T<:Wasabi.Model}
-    query = RawQuery("SELECT * FROM \"$(Wasabi.tablename(m))\" WHERE id = \$1 LIMIT 1")
+    query = Wasabi.RawQuery("SELECT * FROM \"$(Wasabi.tablename(m))\" WHERE id = \$1 LIMIT 1")
     df = Wasabi.execute_query(conn, query, Any[id])
     if size(df, 1) == 0
         return nothing
@@ -130,7 +132,9 @@ function Wasabi.delete_all!(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi
 end
 
 function Wasabi.all(conn::LibPQ.Connection, m::Type{T}) where {T<:Wasabi.Model}
-    query = RawQuery("SELECT * FROM \"$(Wasabi.tablename(m))\"")
+    query = Wasabi.RawQuery("SELECT * FROM \"$(Wasabi.tablename(m))\"")
     df = Wasabi.execute_query(conn, query)
     return Wasabi.df2model(m, df)
+end
+
 end

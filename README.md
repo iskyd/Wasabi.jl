@@ -32,7 +32,8 @@ end
 Wasabi.primary_key(m::Type{UserProfile}) = Wasabi.PrimaryKeyConstraint(Symbol[:id])
 Wasabi.foreign_keys(m::Type{UserProfile}) = [Wasabi.ForeignKeyConstraint(Symbol[:user_id], :user, Symbol[:id])]
 
-configuration = Wasabi.SQLiteConnectionConfiguration("test.db")
+Wasabi.init_backend(Wasabi.SQLiteBackend())
+configuration = WasabiSQLite.ConnectionConfiguration("test.db")
 conn = Wasabi.connect(configuration)
 
 Wasabi.create_schema(conn, User)

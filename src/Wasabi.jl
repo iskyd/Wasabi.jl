@@ -12,6 +12,10 @@ abstract type Model end
 abstract type ModelConstraint end
 abstract type ConnectionConfiguration end
 
+abstract type DatabaseBackend end
+struct SQLiteBackend <: DatabaseBackend end
+struct PostgreSQLBackend <: DatabaseBackend end
+
 struct RawQuery
     value::String
 end
@@ -219,11 +223,20 @@ function to_sql_value end
 """
 function from_sql_value end
 
+function init_backend(backend::T) where {T<:DatabaseBackend}
+    mod = Main
+    if backend === SQLiteBackend()
+        path = normpath(@__DIR__, "backends", "sqlite.jl")
+        Base.include(mod, path)
+    elseif backend === PostgreSQLBackend()
+        path = normpath(@__DIR__, "backends", "postgresql.jl")
+        Base.include(mod, path)
+    end
+end
+
 include("constraints.jl")
 include("builder.jl")
 include("migrations.jl")
 include("types.jl")
-include("backends/sqlite.jl")
-include("backends/postgres.jl")
 
 end

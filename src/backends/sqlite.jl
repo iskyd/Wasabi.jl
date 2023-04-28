@@ -1,8 +1,10 @@
+module WasabiSQLite
+
 using SQLite
 using DataFrames
 using Mocking
 using Dates
-using Wasabi: QueryBuilder
+using Wasabi
 
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Int64}) = "INTEGER"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{String}) = "TEXT"
@@ -13,11 +15,11 @@ Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Date}) = "TEXT"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{DateTime}) = "TEXT"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{AutoIncrement}) = "INTEGER"
 
-struct SQLiteConnectionConfiguration <: Wasabi.ConnectionConfiguration
+struct ConnectionConfiguration <: Wasabi.ConnectionConfiguration
     dbname::String
 end
 
-function Wasabi.connect(config::SQLiteConnectionConfiguration)::SQLite.DB
+function Wasabi.connect(config::ConnectionConfiguration)::SQLite.DB
     db = SQLite.DB(config.dbname)
     return db
 end
@@ -33,7 +35,7 @@ function Wasabi.delete_schema(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
 end
 
 function Wasabi.create_schema(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
-    columns = [(col, Wasabi.mapping(SQLite.DB, coltype(m, col))) for col in Wasabi.colnames(m)]
+    columns = [(col, Wasabi.mapping(SQLite.DB, Wasabi.coltype(m, col))) for col in Wasabi.colnames(m)]
     query = "CREATE TABLE IF NOT EXISTS $(Wasabi.tablename(m)) ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1]) ? "" : " NOT NULL") for col in columns], ", "))"
 
     constraints = Wasabi.constraints(m)
@@ -58,7 +60,7 @@ function sqlite_constraint_to_sql(constraint::Wasabi.UniqueConstraint)::String
     return "UNIQUE ($(join(constraint.fields, ", ")))"
 end
 
-function Wasabi.execute_query(db::SQLite.DB, query::RawQuery, params::Vector{Any}=Any[])
+function Wasabi.execute_query(db::SQLite.DB, query::Wasabi.RawQuery, params::Vector{Any}=Any[])
     SQLite.DBInterface.execute(db, query.value, params) |> DataFrame
 end
 
@@ -79,7 +81,7 @@ function Wasabi.rollback(db::SQLite.DB)
 end
 
 function Wasabi.first(db::SQLite.DB, m::Type{T}, id) where {T<:Wasabi.Model}
-    query = RawQuery("SELECT * FROM $(Wasabi.tablename(m)) WHERE id = \$1 LIMIT 1")
+    query = Wasabi.RawQuery("SELECT * FROM $(Wasabi.tablename(m)) WHERE id = \$1 LIMIT 1")
     df = Wasabi.execute_query(db, query, Any[id])
     if size(df, 1) == 0
         return nothing
@@ -130,7 +132,9 @@ function Wasabi.delete_all!(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
 end
 
 function Wasabi.all(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
-    query = RawQuery("SELECT * FROM $(Wasabi.tablename(m))")
+    query = Wasabi.RawQuery("SELECT * FROM $(Wasabi.tablename(m))")
     df = Wasabi.execute_query(db, query)
     return Wasabi.df2model(m, df)
+end
+
 end
