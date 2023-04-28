@@ -1,6 +1,4 @@
 @testset "coltype" begin
-    using SQLite
-
     @test Wasabi.coltype(User, :id) == AutoIncrement
     @test Wasabi.coltype(User, :name) == String
     @test Wasabi.coltype(User, :created_at) == DateTime
