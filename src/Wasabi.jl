@@ -149,7 +149,7 @@ function execute_query end
 function execute_query end
 
 """
-    first(db::Any, m::Type{T})
+    first(db::Any, m::Type{T}, id::Any) where {T <: Model}
     Returns the first row of the given model with the given id.
 """
 function first end
