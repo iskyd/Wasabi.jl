@@ -11,10 +11,6 @@ abstract type Model end
 abstract type ModelConstraint end
 abstract type ConnectionConfiguration end
 
-abstract type DatabaseBackend end
-struct SQLiteBackend <: DatabaseBackend end
-struct PostgreSQLBackend <: DatabaseBackend end
-
 struct RawQuery
     value::String
 end
@@ -47,10 +43,6 @@ alias(m::Type{T}) where {T<:Model} = Wasabi.tablename(m) * "_alias"
 """
 alias(m::String) = Wasabi.tablename(m) * "_alias"
 
-
-function test_fn()
-    println(eval(:User))
-end
 """
     colnames(m::Type{T}) where {T <: Model}
     Returns the names of the columns for the given model.
