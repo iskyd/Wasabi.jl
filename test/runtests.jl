@@ -2,7 +2,6 @@ cd(@__DIR__)
 
 using Test
 using Wasabi
-using Mocking
 using Random
 using Dates
 
@@ -55,3 +54,4 @@ addtests("constraints.jl")
 addtests("isnullable.jl")
 addtests("tablename.jl")
 addtests("types.jl")
+addtests("model.jl")
