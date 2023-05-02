@@ -1,7 +1,7 @@
 name = "Wasabi"
 uuid = "cec542a4-22c5-46cb-8ca4-a46a7737b387"
 authors = ["Mattia <iskyd@proton.me>"]
-version = "0.4.0"
+version = "0.3.0"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
