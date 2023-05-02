@@ -137,8 +137,8 @@ function create_schema end
 function delete_schema end
 
 """
-execute_query(db::Any, query::QueryBuilder.Query)
-Executes the given query.
+    execute_query(db::Any, query::QueryBuilder.Query)
+    Executes the given query.
 """
 function execute_query end
 
