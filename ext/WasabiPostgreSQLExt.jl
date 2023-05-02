@@ -1,7 +1,6 @@
 module WasabiPostgreSQLExt
 
-import Wasabi
-using Wasabi: QueryBuilder
+using Wasabi
 using DataFrames
 using LibPQ
 using Mocking
@@ -16,15 +15,7 @@ Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Date}) = "DATE"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{DateTime}) = "TIMESTAMP"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Wasabi.AutoIncrement}) = "SERIAL"
 
-Base.@kwdef struct ConnectionConfiguration <: Wasabi.ConnectionConfiguration
-    endpoint::String
-    username::String
-    password::String
-    port::Int
-    dbname::String
-end
-
-function Wasabi.connect(config::ConnectionConfiguration)::LibPQ.Connection
+function Wasabi.connect(config::PostgreSQLConnectionConfiguration)::LibPQ.Connection
     LibPQ.Connection(
         "host=" * config.endpoint * " user=" * config.username * " password=" * config.password * " port=" * string(config.port) * " dbname=" * config.dbname
     )

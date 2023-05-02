@@ -15,11 +15,7 @@ Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Date}) = "TEXT"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{DateTime}) = "TEXT"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Wasabi.AutoIncrement}) = "INTEGER"
 
-struct ConnectionConfiguration <: Wasabi.ConnectionConfiguration
-    dbname::String
-end
-
-function Wasabi.connect(config::ConnectionConfiguration)::SQLite.DB
+function Wasabi.connect(config::SQLiteConnectionConfiguration)::SQLite.DB
     db = SQLite.DB(config.dbname)
     return db
 end

@@ -4,6 +4,7 @@ using Test
 using Wasabi
 using Random
 using Dates
+using Mocking
 
 Random.seed!(42)
 
@@ -55,3 +56,8 @@ addtests("isnullable.jl")
 addtests("tablename.jl")
 addtests("types.jl")
 addtests("model.jl")
+addtests("configurations.jl")
+addtests("sqlite.jl")
+addtests("postgresql.jl")
+addtests("custom_type.jl")
+addtests("migrations.jl")

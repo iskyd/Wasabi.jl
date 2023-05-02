@@ -6,6 +6,9 @@ using Dates
 export QueryBuilder
 export AutoIncrement
 export @rq_str
+export SQLiteConnectionConfiguration
+export PostgreSQLConnectionConfiguration
+export Migrations
 
 abstract type Model end
 abstract type ModelConstraint end
@@ -215,7 +218,9 @@ function to_sql_value end
 function from_sql_value end
 
 include("constraints.jl")
-include("builder.jl")
+include("QueryBuilder.jl")
 include("types.jl")
+include("Configurations.jl")
+include("Migrations.jl")
 
 end
