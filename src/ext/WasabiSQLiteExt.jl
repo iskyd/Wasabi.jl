@@ -1,7 +1,6 @@
 module WasabiSQLiteExt
 
-import Wasabi
-using Wasabi: QueryBuilder
+using Wasabi
 using SQLite
 using DataFrames
 using Mocking
