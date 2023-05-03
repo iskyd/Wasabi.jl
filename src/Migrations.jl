@@ -82,7 +82,6 @@ function execute(db::Any, path::String, target_version::String)
             direction = "down"
             versions_to_execute = sort(versions, by=x -> x[2], rev=true)[next_idx:cur_idx-1]
         else
-            direction = "up"
             versions_to_execute = versions[cur_idx+1:next_idx]
         end
     else

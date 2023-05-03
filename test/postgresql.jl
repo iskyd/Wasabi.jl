@@ -10,6 +10,15 @@
     )
     conn = Wasabi.connect(configuration)
 
+    @test Wasabi.mapping(LibPQ.Connection, Int64) == "INTEGER"
+    @test Wasabi.mapping(LibPQ.Connection, String) == "TEXT"
+    @test Wasabi.mapping(LibPQ.Connection, Bool) == "BOOLEAN"
+    @test Wasabi.mapping(LibPQ.Connection, Float64) == "REAL"
+    @test Wasabi.mapping(LibPQ.Connection, Any) == "BLOB"
+    @test Wasabi.mapping(LibPQ.Connection, Date) == "DATE"
+    @test Wasabi.mapping(LibPQ.Connection, DateTime) == "TIMESTAMP"
+    @test Wasabi.mapping(LibPQ.Connection, Wasabi.AutoIncrement) == "SERIAL"
+
     Mocking.activate()
 
     patch = @patch LibPQ.execute(conn::LibPQ.Connection, query::String) = query

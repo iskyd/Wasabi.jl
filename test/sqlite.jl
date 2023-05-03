@@ -1,8 +1,17 @@
 @testset "sqlite" begin
     using SQLite
 
-    configuration = SQLiteConnectionConfiguration(dbname = "test.db")
+    configuration = SQLiteConnectionConfiguration(dbname="test.db")
     conn = Wasabi.connect(configuration)
+
+    @test Wasabi.mapping(SQLite.DB, Int64) == "INTEGER"
+    @test Wasabi.mapping(SQLite.DB, String) == "TEXT"
+    @test Wasabi.mapping(SQLite.DB, Bool) == "INTEGER"
+    @test Wasabi.mapping(SQLite.DB, Float64) == "REAL"
+    @test Wasabi.mapping(SQLite.DB, Any) == "BLOB"
+    @test Wasabi.mapping(SQLite.DB, Date) == "TEXT"
+    @test Wasabi.mapping(SQLite.DB, DateTime) == "TEXT"
+    @test Wasabi.mapping(SQLite.DB, Wasabi.AutoIncrement) == "INTEGER"
 
     Mocking.activate()
     patch = Mocking.@patch SQLite.execute(db::SQLite.DB, query::String) = query
