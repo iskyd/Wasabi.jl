@@ -6,18 +6,16 @@ This will generate a folder containing the first migration which create the migr
 
 ```
 using Wasbi
-using WasabiMigrations
 
 path = "migrations/"
-WasabiMigrations.generate(path)
+Migrations.generate(path)
 ```
 
 Next you can update (upgrade/downgrade) the database to the required version doing
 ```
 using Wasbi
-using WasabiMigrations
-using WasabiSQLite
+using SQLite
 
-version = "xxx" # using WasabiMigrations.get_last_version(path) gives you the latest available migration
-WasabiMigrations.execute(db, path, version)
+version = "xxx" # using Migrations.get_last_version(path) gives you the latest available migration
+Migrations.execute(db, path, version)
 ```

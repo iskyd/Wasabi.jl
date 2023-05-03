@@ -13,9 +13,9 @@ Wasabi is a simple yet powerful ORM for the Julia Language. It currently support
 
 ```
 using Wasabi
-using WasabiSQLite
+using SQLite
 
-configuration = WasabiSQLite.ConnectionConfiguration("test.db")
+configuration = SQLiteConnectionConfiguration("test.db")
 conn = Wasabi.connect(configuration)
 
 # declare models

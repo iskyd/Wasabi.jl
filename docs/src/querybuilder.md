@@ -7,14 +7,14 @@ CurrentModule = Wasabi.QueryBuilder
 You can use QueryBuilder to create and execute a query in a simple and fast way.
 ```
 using Wasabi
-using WasabiSQLite
+using SQLite
 
 mutable struct User <: Wasabi.Model
     id::Int
     name::String
 end
 
-configuration = Wasabi.ConnectionConfiguration("test.db")
+configuration = SQLiteConnectionConfiguration("test.db")
 conn = Wasabi.connect(configuration)
 
 query = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.limit(1)
