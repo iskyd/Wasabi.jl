@@ -9,6 +9,8 @@
 
 Wasabi is a simple yet powerful ORM for the Julia Language. It currently supports postgresql and sqlite (more to come soon). Wasabi gives you access to a powerful query builder so that you don't need to write SQL and it automatically takes care of query params. It also gives you a simple way to manage tables and their updates using simple migrations.
 
+> **WARNING**: At the moment the latest version of Wasabi (0.3.0) works only with Julia 1.9 due to the use of Pkg Extension. You can use version 0.2.2 for previous versions of Julia, but note that this version depends both from LibPQ and SQLite. Version 0.3.0 can't be released yet to the General registry because Julia 1.9.0 is not yet released.
+
 ### Getting Started
 
 ```
