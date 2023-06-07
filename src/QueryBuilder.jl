@@ -87,7 +87,7 @@ end
 function select(select::Union{Vector{Symbol},Nothing}=nothing)
     return function (q::Query)
         if select === nothing
-            select = Wasabi.colnames(q.source)
+            select = filter(col -> !(col in Wasabi.exclude_fields(q.source)), Wasabi.colnames(q.source))
         end
         q.select = vcat(q.select, [SelectExpr(source=q.source, field=col) for col in select])
         q

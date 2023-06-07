@@ -18,12 +18,9 @@
 
     apply(patch) do
         @test Wasabi.delete_schema(conn, User) == "DROP TABLE IF EXISTS user"
-        @test Wasabi.delete_schema(conn, UserProfile) == "DROP TABLE IF EXISTS user_profile"
+        @test Wasabi.delete_schema(conn, Role) == "DROP TABLE IF EXISTS role"
         @test Wasabi.create_schema(conn, User) == "CREATE TABLE IF NOT EXISTS user (id INTEGER NOT NULL, name TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (id))"
-    end
-
-    apply(patch) do
-        @test Wasabi.create_schema(conn, UserProfile) == "CREATE TABLE IF NOT EXISTS user_profile (id INTEGER NOT NULL, user_id INTEGER NOT NULL, bio TEXT, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES user (id), UNIQUE (user_id))"
+        @test Wasabi.create_schema(conn, Role) == "CREATE TABLE IF NOT EXISTS role (id INTEGER NOT NULL, name TEXT NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES user (id))"
     end
 
     patch_execute_raw_query = @patch Wasabi.execute_query(db::SQLite.DB, query::Wasabi.RawQuery, params::Vector{Any}=Any[]) = query
@@ -31,17 +28,17 @@
         query = QueryBuilder.from(User) |> QueryBuilder.select([:id, :name]) |> QueryBuilder.limit(1) |> QueryBuilder.offset(1)
         @test Wasabi.execute_query(conn, query) == rq"SELECT user_alias.id, user_alias.name FROM \"user\" user_alias LIMIT 1 OFFSET 1"
 
-        query = QueryBuilder.from(User) |> QueryBuilder.select([:id, :name]) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio]) |> QueryBuilder.join(UserProfile, UserPhone, :inner, (:id, :user_profile_id), [:phone])
-        @test Wasabi.execute_query(conn, query) == rq"SELECT user_alias.id, user_alias.name, user_profile_alias.bio, user_phone_alias.phone FROM \"user\" user_alias INNER JOIN \"user_profile\" user_profile_alias ON user_alias.id = user_profile_alias.user_id INNER JOIN \"user_phone\" user_phone_alias ON user_profile_alias.id = user_phone_alias.user_profile_id"
+        query = QueryBuilder.from(User) |> QueryBuilder.select([:id, :name]) |> QueryBuilder.join(User, Role, :inner, (:id, :user_id), [:name])
+        @test Wasabi.execute_query(conn, query) == rq"SELECT user_alias.id, user_alias.name, role_alias.name FROM \"user\" user_alias INNER JOIN \"role\" role_alias ON user_alias.id = role_alias.user_id"
     end
 
     Mocking.deactivate()
 
     Wasabi.delete_schema(conn, User)
-    Wasabi.delete_schema(conn, UserProfile)
+    Wasabi.delete_schema(conn, Role)
 
     Wasabi.create_schema(conn, User)
-    Wasabi.create_schema(conn, UserProfile)
+    Wasabi.create_schema(conn, Role)
 
     dtnow = Dates.now()
     query = rq"INSERT INTO user (name, created_at) VALUES (?, ?)"
@@ -55,7 +52,7 @@
     @test result[!, :created_at][1] == dtnow
 
     user = Wasabi.df2model(User, result)[1]
-    @test user.id == AutoIncrement(1)
+    @test user.id == 1
     @test user.name == "John Doe"
     @test user.created_at == dtnow
 
@@ -74,10 +71,10 @@
 
     users = Wasabi.df2model(User, result)
     @test length(users) == 2
-    @test users[1].id == AutoIncrement(1)
+    @test users[1].id == 1
     @test users[1].name == "John Doe"
     @test users[1].created_at == dtnow
-    @test users[2].id == AutoIncrement(2)
+    @test users[2].id == 2
     @test users[2].name == "Jane Doe"
     @test users[2].created_at == dtnow
 
@@ -100,7 +97,7 @@
     @test length(result[!, :id]) == 3
 
     user = Wasabi.first(conn, User, 1)
-    @test user.id == AutoIncrement(1)
+    @test user.id == 1
     @test user.name == "John Doe"
 
     user = Wasabi.first(conn, User, 10)
@@ -111,7 +108,7 @@
     @test keys[1, 1] == 4
 
     user = Wasabi.first(conn, User, 4)
-    @test user.id == AutoIncrement(4)
+    @test user.id == 4
     @test user.name == "John Doe"
     @test user.created_at == dtnow
 
@@ -119,7 +116,7 @@
     Wasabi.update!(conn, user)
 
     user = Wasabi.first(conn, User, 4)
-    @test user.id == AutoIncrement(4)
+    @test user.id == 4
     @test user.name == "Jane Doe"
     @test user.created_at == dtnow
 
@@ -135,7 +132,7 @@
     users = Wasabi.execute_query(conn, qb)
     @test length(users[!, :id]) == 1
     user = Wasabi.df2model(User, users)[1]
-    @test user.id == AutoIncrement(2)
+    @test user.id == 2
     @test user.name == "Jane Doe"
     @test user.created_at == dtnow
 

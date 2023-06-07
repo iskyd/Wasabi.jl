@@ -11,6 +11,7 @@ export PostgreSQLConnectionConfiguration
 export Migrations
 
 abstract type Model end
+abstract type Table end
 abstract type ModelConstraint end
 abstract type ConnectionConfiguration end
 
@@ -75,12 +76,25 @@ end
 union_types(x::Union) = (x.a, union_types(x.b)...)
 union_types(x::Type) = (x,)
 
+
+"""
+    exclude_fields(m::Type{T}) where {T <: Model}
+    Returns the fields to exclude from the model when running queries.
+"""
+exclude_fields(m::Type{T}) where {T<:Wasabi.Model} = []
+    
+"""
+    autoincrement_fields(m::Type{T}) where {T <: Model}
+    Returns the fields that are autoincremented.
+"""
+autoincrement_fields(m::Type{T}) where {T<:Wasabi.Model} = [:id]
+
 """
     df2model(m::Type{T}, df::DataFrame) where {T <: Model}
     Converts the given DataFrame to the given model.
 """
 function df2model(m::Type{T}, df::DataFrame) where {T<:Wasabi.Model}
-    return [m(map(col -> row[col] !== missing ? Wasabi.from_sql_value(coltype(m, col), row[col]) : nothing, Wasabi.colnames(m))...) for row in eachrow(df)]
+    return [m(map(col -> row[col] !== missing ? Wasabi.from_sql_value(coltype(m, col), row[col]) : nothing, filter(x -> String(x) in names(df), Wasabi.colnames(m)))...) for row in eachrow(df)]
 end
 
 """

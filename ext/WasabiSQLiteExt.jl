@@ -31,7 +31,7 @@ function Wasabi.delete_schema(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
 end
 
 function Wasabi.create_schema(db::SQLite.DB, m::Type{T}) where {T<:Wasabi.Model}
-    columns = [(col, Wasabi.mapping(SQLite.DB, Wasabi.coltype(m, col))) for col in Wasabi.colnames(m)]
+    columns = [(col, Wasabi.mapping(SQLite.DB, Wasabi.coltype(m, col))) for col in Wasabi.colnames(m) if !(col in Wasabi.exclude_fields(m))]
     query = "CREATE TABLE IF NOT EXISTS $(Wasabi.tablename(m)) ($(join([String(col[1]) * " " * col[2] * (Wasabi.isnullable(m, col[1]) ? "" : " NOT NULL") for col in columns], ", "))"
 
     constraints = Wasabi.constraints(m)
@@ -87,7 +87,7 @@ function Wasabi.first(db::SQLite.DB, m::Type{T}, id) where {T<:Wasabi.Model}
 end
 
 function Wasabi.insert!(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
-    columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
+    columns = filter(column -> column[2] !== nothing && !(column[1] in Wasabi.exclude_fields(typeof(model))), Wasabi.model2tuple(model))
     fields = map(column -> column[1], columns)
     values = map(column -> Wasabi.to_sql_value(column[2]), columns)
 
@@ -114,7 +114,7 @@ function Wasabi.delete!(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
 end
 
 function Wasabi.update!(db::SQLite.DB, model::T) where {T<:Wasabi.Model}
-    columns = filter(column -> column[2] !== nothing, Wasabi.model2tuple(model))
+    columns = filter(column -> column[2] !== nothing && !(column[1] in Wasabi.exclude_fields(typeof(model))), Wasabi.model2tuple(model))
     fields = map(column -> column[1], columns)
     values = (map(column -> Wasabi.to_sql_value(column[2]), columns)..., Wasabi.to_sql_value(model.id))
 
