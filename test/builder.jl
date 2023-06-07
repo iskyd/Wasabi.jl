@@ -18,11 +18,11 @@
     @test query.select == [QueryBuilder.SelectExpr(source=User, field=:name)]
     @test query.groupby == Symbol[:name]
 
-    query = QueryBuilder.from(User) |> QueryBuilder.select([:name]) |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio])
+    query = QueryBuilder.from(User) |> QueryBuilder.select([:name]) |> QueryBuilder.join(User, Role, :inner, (:id, :user_id), [:name])
     @test query.source == User
-    @test query.select == [QueryBuilder.SelectExpr(source=User, field=:name), QueryBuilder.SelectExpr(source=UserProfile, field=:bio)]
+    @test query.select == [QueryBuilder.SelectExpr(source=User, field=:name), QueryBuilder.SelectExpr(source=Role, field=:name)]
     @test query.joins[1].source == User
-    @test query.joins[1].target == UserProfile
+    @test query.joins[1].target == Role
     @test query.joins[1].type == :inner
     @test query.joins[1].on == (:id, :user_id)
 
@@ -49,10 +49,10 @@
     q_where = QueryBuilder.build_where_expr(e, params)
     @test q_where == "WHERE (user_alias.name LIKE \$1)"
 
-    query = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.join(User, UserProfile, :inner, (:id, :user_id), [:bio]) |> QueryBuilder.where(:(or, (User, id, in, [1, 2, 3]), (UserProfile, bio, eq, "I'm a developer")))
+    query = QueryBuilder.from(User) |> QueryBuilder.select() |> QueryBuilder.join(User, Role, :inner, (:id, :user_id), [:name]) |> QueryBuilder.where(:(or, (User, id, in, [1, 2, 3]), (Role, name, eq, "admin")))
     sql, params = QueryBuilder.build(query)
-    @test sql.value == "SELECT user_alias.id, user_alias.name, user_alias.created_at, user_profile_alias.bio FROM \"user\" user_alias INNER JOIN \"user_profile\" user_profile_alias ON user_alias.id = user_profile_alias.user_id WHERE (user_alias.id IN (\$1, \$2, \$3) OR user_profile_alias.bio = \$4)"
-    @test params == [1, 2, 3, "I'm a developer"]
+    @test sql.value == "SELECT user_alias.id, user_alias.name, user_alias.created_at, role_alias.name FROM \"user\" user_alias INNER JOIN \"role\" role_alias ON user_alias.id = role_alias.user_id WHERE (user_alias.id IN (\$1, \$2, \$3) OR role_alias.name = \$4)"
+    @test params == [1, 2, 3, "admin"]
 
     query = QueryBuilder.from(User) |> QueryBuilder.select(User, :id, :total, :count)
     sql, params = QueryBuilder.build(query)

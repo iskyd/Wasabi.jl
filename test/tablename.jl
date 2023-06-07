@@ -1,4 +1,4 @@
 @testset "tablename" begin
     @test Wasabi.tablename(User) == "user"
-    @test Wasabi.tablename(UserProfile) == "user_profile"
+    @test Wasabi.tablename(Role) == "role"
 end
