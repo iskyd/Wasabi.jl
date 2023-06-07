@@ -21,4 +21,15 @@
     @test constraints[2].fields == Wasabi.foreign_keys(Role)[1].fields
     @test constraints[2].foreign_table == Wasabi.foreign_keys(Role)[1].foreign_table
     @test constraints[2].foreign_fields == Wasabi.foreign_keys(Role)[1].foreign_fields
+
+    constraints = Wasabi.constraints(UserProfile)
+    @test length(constraints) == 3
+    @test constraints[1] isa Wasabi.PrimaryKeyConstraint
+    @test constraints[1].fields == Wasabi.primary_key(UserProfile).fields
+    @test constraints[2] isa Wasabi.ForeignKeyConstraint
+    @test constraints[2].fields == Wasabi.foreign_keys(UserProfile)[1].fields
+    @test constraints[2].foreign_table == Wasabi.foreign_keys(UserProfile)[1].foreign_table
+    @test constraints[2].foreign_fields == Wasabi.foreign_keys(UserProfile)[1].foreign_fields
+    @test constraints[3] isa Wasabi.UniqueConstraint
+    @test constraints[3].fields == Wasabi.unique_constraints(UserProfile)[1].fields
 end
