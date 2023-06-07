@@ -11,6 +11,7 @@
     conn = Wasabi.connect(configuration)
 
     @test Wasabi.mapping(LibPQ.Connection, Int64) == "INTEGER"
+    @test Wasabi.mapping(LibPQ.Connection, Int32) == "INTEGER"
     @test Wasabi.mapping(LibPQ.Connection, String) == "TEXT"
     @test Wasabi.mapping(LibPQ.Connection, Bool) == "BOOLEAN"
     @test Wasabi.mapping(LibPQ.Connection, Float64) == "REAL"

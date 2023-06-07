@@ -6,7 +6,7 @@ using DataFrames
 using Mocking
 using Dates
 
-Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Int64}) = "INTEGER"
+Wasabi.mapping(db::Type{SQLite.DB}, t::Type{T}) where{T<:Integer} = "INTEGER"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{String}) = "TEXT"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Bool}) = "INTEGER"
 Wasabi.mapping(db::Type{SQLite.DB}, t::Type{Float64}) = "REAL"

@@ -5,6 +5,7 @@
     conn = Wasabi.connect(configuration)
 
     @test Wasabi.mapping(SQLite.DB, Int64) == "INTEGER"
+    @test Wasabi.mapping(SQLite.DB, Int32) == "INTEGER"
     @test Wasabi.mapping(SQLite.DB, String) == "TEXT"
     @test Wasabi.mapping(SQLite.DB, Bool) == "INTEGER"
     @test Wasabi.mapping(SQLite.DB, Float64) == "REAL"

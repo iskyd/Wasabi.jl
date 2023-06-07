@@ -6,7 +6,7 @@ using LibPQ
 using Mocking
 using Dates
 
-Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Int64}) = "INTEGER"
+Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{T}) where{T<:Integer} = "INTEGER"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{String}) = "TEXT"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Bool}) = "BOOLEAN"
 Wasabi.mapping(db::Type{LibPQ.Connection}, t::Type{Float64}) = "REAL"
