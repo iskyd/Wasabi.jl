@@ -13,7 +13,7 @@ Wasabi is a simple yet powerful ORM for the Julia Language. It currently support
 
 ### Getting Started
 
-```
+```julia
 using Wasabi
 using SQLite
 
