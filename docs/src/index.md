@@ -7,7 +7,7 @@ CurrentModule = Wasabi
 Wasabi is a simple ORM for Julia. It currently supports PostgreSQL and SQLite.
 Wasabi uses [package extensions](https://github.com/JuliaLang/julia/blob/v1.9.0-beta3/NEWS.md#package-manager) so it requires Julia >= 1.9 to run. Using SQLite or LibPQ automatically includes Wasabi features to support it as backend database. 
 
-```
+```julia
 using Wasabi
 using SQLite
 
